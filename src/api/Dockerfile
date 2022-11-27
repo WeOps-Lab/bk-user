@@ -15,12 +15,9 @@ ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
 
 RUN pip install --upgrade pip setuptools
-RUN pip install poetry==1.1.13
+
 
 WORKDIR /app
-COPY src/api/pyproject.toml /app
-COPY src/api/poetry.lock /app
-RUN poetry config virtualenvs.create false && poetry install --no-dev
 
 COPY src/api/wsgi.py /app
 COPY src/api/bkuser_core /app/bkuser_core
@@ -33,5 +30,5 @@ COPY src/api/bin/start_celery.sh /app
 COPY src/api/bin/migrate_iam.sh /app
 COPY src/api/bin/sync_apigateway.sh /app
 COPY src/api/resources /app/resources
-
-CMD ["bash", "/app/start.sh"]
+COPY src/api/requirements.txt /app/requirements.txt
+RUN pip install -r ./requirements.txt
