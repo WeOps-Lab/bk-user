@@ -61,3 +61,9 @@ helm-publish: deploy/helm/dist/*.tgz
 	for f in $^; do \
 		curl -kL -X POST -F chart=@$${f} -u ${credentials} ${chart_repo}; \
 	done
+
+release:
+	rm -Rf /opt/usermgr  &&\
+	mkdir -p /opt/usermgr &&\
+	cp -Rf ./src/api /opt/usermgr &&\
+	cp -Rf ./src/api/support-files /opt/usermgr
