@@ -62,8 +62,15 @@ helm-publish: deploy/helm/dist/*.tgz
 		curl -kL -X POST -F chart=@$${f} -u ${credentials} ${chart_repo}; \
 	done
 
-release:
+release-api:
 	rm -Rf /opt/usermgr  &&\
 	mkdir -p /opt/usermgr &&\
 	cp -Rf ./src/api /opt/usermgr &&\
-	cp -Rf ./src/api/support-files /opt/usermgr
+	rm -Rf /opt/usermgr/api/bkuser_global &&\
+	cp -Rf ./src/bkuser_global /opt/usermgr/api/bkuser_global &&\
+	cp -Rf ./src/api/support-files /opt/usermgr &&\
+	cp -Rf ./VERSION /opt/usermgr &&\
+	cp -Rf ./src/api/projects.yaml /opt/usermgr &&\
+	pip3 download  -i https://mirrors.cloud.tencent.com/pypi/simple -r ./src/api/requirements.txt -d /opt/usermgr/pkgs &&\
+	cd /opt &&\
+	tar -zcvf ./usermgr_ce-2.4.2-bkofficial.tar.gz usermgr/
