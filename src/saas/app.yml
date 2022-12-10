@@ -1,0 +1,338 @@
+app_code: bk_user_manage
+app_name: 用户管理
+app_name_en: User Management
+author: 蓝鲸智云
+category: 开发工具
+introduction: 【用户管理】是蓝鲸推出的用户及组织架构管理平台，通过该平台可以方便地管理蓝鲸用户、组织架构，未来将提供与企业组织架构对接的能力
+introduction_en: User Management is an organization-management solution provided by Tencent BlueKing, which provides data source for unified login of enterprises.
+version: 2.4.2
+language: python
+is_use_celery: false
+is_use_celery_with_gevent: false
+container:
+  memory: 4096
+desktop:
+  width: 1200
+  height: 720
+  is_max: True
+  open_mode: new_tab
+libraries:
+
+  - name: aenum
+    version: 2.2.1
+
+
+  - name: aiocontextvars
+    version: 0.2.2
+
+
+  - name: asgiref
+    version: 3.4.1
+
+
+  - name: backoff
+    version: 1.10.0
+
+
+  - name: certifi
+    version: 2019.11.28
+
+
+  - name: cffi
+    version: 1.15.0
+
+
+  - name: charset-normalizer
+    version: 2.0.12
+
+
+  - name: contextlib2
+    version: 21.6.0
+
+
+  - name: contextvars
+    version: 2.4
+
+
+  - name: coreapi
+    version: 2.3.3
+
+
+  - name: coreschema
+    version: 0.0.4
+
+
+  - name: dataclasses
+    version: 0.8
+
+
+  - name: deprecated
+    version: 1.2.13
+
+
+  - name: django-cors-headers
+    version: 3.10.1
+
+
+  - name: django-environ
+    version: 0.4.5
+
+
+  - name: django-prometheus
+    version: 2.2.0
+
+
+  - name: django
+    version: 3.2.15
+
+
+  - name: djangorestframework
+    version: 3.12.4
+
+
+  - name: drf-yasg
+    version: 1.20.0
+
+
+  - name: et-xmlfile
+    version: 1.1.0
+
+
+  - name: gevent
+    version: 21.1.2
+
+
+  - name: googleapis-common-protos
+    version: 1.56.2
+
+
+  - name: greenlet
+    version: 1.1.2
+
+
+  - name: grpcio
+    version: 1.46.3
+
+
+  - name: gunicorn
+    version: 19.9.0
+
+
+  - name: idna
+    version: 3.3
+
+
+  - name: immutables
+    version: 0.18
+
+
+  - name: inflection
+    version: 0.5.1
+
+
+  - name: itypes
+    version: 1.2.0
+
+
+  - name: jdcal
+    version: 1.4.1
+
+
+  - name: jinja2
+    version: 3.0.3
+
+
+  - name: markupsafe
+    version: 2.0.1
+
+
+  - name: openpyxl
+    version: 3.0.0
+
+
+  - name: opentelemetry-api
+    version: 1.7.1
+
+
+  - name: opentelemetry-exporter-jaeger-proto-grpc
+    version: 1.7.1
+
+
+  - name: opentelemetry-exporter-jaeger-thrift
+    version: 1.7.1
+
+
+  - name: opentelemetry-exporter-jaeger
+    version: 1.7.1
+
+
+  - name: opentelemetry-exporter-otlp-proto-grpc
+    version: 1.7.1
+
+
+  - name: opentelemetry-exporter-otlp-proto-http
+    version: 1.7.1
+
+
+  - name: opentelemetry-exporter-otlp
+    version: 1.7.1
+
+
+  - name: opentelemetry-instrumentation-celery
+    version: 0.26b1
+
+
+  - name: opentelemetry-instrumentation-dbapi
+    version: 0.26b1
+
+
+  - name: opentelemetry-instrumentation-django
+    version: 0.26b1
+
+
+  - name: opentelemetry-instrumentation-logging
+    version: 0.26b1
+
+
+  - name: opentelemetry-instrumentation-redis
+    version: 0.26b1
+
+
+  - name: opentelemetry-instrumentation-requests
+    version: 0.26b1
+
+
+  - name: opentelemetry-instrumentation-wsgi
+    version: 0.26b1
+
+
+  - name: opentelemetry-instrumentation
+    version: 0.26b1
+
+
+  - name: opentelemetry-proto
+    version: 1.7.1
+
+
+  - name: opentelemetry-sdk
+    version: 1.7.1
+
+
+  - name: opentelemetry-semantic-conventions
+    version: 0.26b1
+
+
+  - name: opentelemetry-util-http
+    version: 0.26b1
+
+
+  - name: packaging
+    version: 21.0
+
+
+  - name: prometheus-client
+    version: 0.14.1
+
+
+  - name: protobuf
+    version: 3.19.4
+
+
+  - name: pycparser
+    version: 2.21
+
+
+  - name: pydantic
+    version: 1.9.0
+
+
+  - name: pymysql
+    version: 1.0.2
+
+
+  - name: pyparsing
+    version: 2.4.7
+
+
+  - name: python-json-logger
+    version: 0.1.11
+
+
+  - name: pytz
+    version: 2022.1
+
+
+  - name: pyyaml
+    version: 5.4.1
+
+
+  - name: raven
+    version: 6.1.0
+
+
+  - name: requests
+    version: 2.27.1
+
+
+  - name: ruamel.yaml.clib
+    version: 0.2.6
+
+
+  - name: ruamel.yaml
+    version: 0.17.21
+
+
+  - name: semantic-version
+    version: 2.9.0
+
+
+  - name: sentry-sdk
+    version: 1.5.6
+
+
+  - name: six
+    version: 1.11.0
+
+
+  - name: sqlparse
+    version: 0.4.2
+
+
+  - name: thrift
+    version: 0.16.0
+
+
+  - name: typing-extensions
+    version: 4.1.1
+
+
+  - name: uritemplate
+    version: 4.1.1
+
+
+  - name: urllib3
+    version: 1.26.9
+
+
+  - name: werkzeug
+    version: 2.0.3
+
+
+  - name: whitenoise
+    version: 5.2.0
+
+
+  - name: wrapt
+    version: 1.14.1
+
+
+  - name: zope.event
+    version: 4.5.0
+
+
+  - name: zope.interface
+    version: 5.4.0
+
+
+developer_code: blueking
+crypt_version: 1

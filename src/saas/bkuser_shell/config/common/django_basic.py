@@ -13,7 +13,7 @@ import os
 from . import PROJECT_ROOT
 
 # 应用密钥
-SECRET_KEY = "MQtd_0cw&AiY5jT&&#w7%9sCK=HW$O_e%ch4xDd*AaP(xU0s3X"
+SECRET_KEY = "3LzUv_G3yblO"
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 

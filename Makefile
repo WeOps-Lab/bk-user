@@ -74,3 +74,27 @@ release-api:
 	pip3 download  -i https://mirrors.cloud.tencent.com/pypi/simple -r ./src/api/requirements.txt -d /opt/usermgr/pkgs &&\
 	cd /opt &&\
 	tar -zcvf ./usermgr_ce-2.4.2-bkofficial.tar.gz usermgr/
+
+release-saas:
+	# cd ./src/pages &&\
+	# npm install    &&\
+	# npm run build  &&\
+	# cd ../..  &&\
+	rm -Rf /opt/bk_user_manage   &&\
+	mkdir -p /opt/bk_user_manage/ &&\
+	cp -Rf ./src/saas /opt/bk_user_manage/src &&\
+	cp -Rf ./src/pages/dist /opt/bk_user_manage/src/static &&\
+	rm -Rf /opt/bk_user_manage/src/bkuser_global &&\
+	cp -Rf ./src/bkuser_global /opt/bk_user_manage/src/ &&\
+	rm -Rf /opt/bk_user_manage/src/bkuser_sdk &&\
+	cp -Rf ./src/sdk /opt/bk_user_manage/src/bkuser_sdk &&\
+	cp -Rf ./VERSION /opt/bk_user_manage &&\
+	cp -Rf ./src/saas/app.yml /opt/bk_user_manage &&\
+	cp -Rf ./src/saas/bk_user_manage.png /opt/bk_user_manage/  &&\
+	mkdir -p /opt/bk_user_manage/pkgs &&\
+	pip3 download  -i https://mirrors.cloud.tencent.com/pypi/simple -r ./src/saas/requirements.txt -d /opt/bk_user_manage/pkgs &&\
+	pip3 download cffi==1.15.0  -i https://mirrors.cloud.tencent.com/pypi/simple -d /opt/bk_iam/pkgs  &&\
+    pip3 download idna==2.1  -i https://mirrors.cloud.tencent.com/pypi/simple -d /opt/bk_iam/pkgs  &&\
+    pip3 download pycparser==2.2  -i https://mirrors.cloud.tencent.com/pypi/simple -d /opt/bk_iam/pkgs  &&\
+	cd /opt/  &&\
+	tar -zcvf ./bk_user_manage_V2.4.2-bkofficial.tar.gz bk_user_manage/

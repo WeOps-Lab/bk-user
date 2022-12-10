@@ -8,13 +8,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from . import env
-from bkuser_global.config import get_db_config
+import os
+# from bkuser_global.config import get_db_config
 
 # ==============================================================================
 # 数据库配置
 # ==============================================================================
-DB_PREFIX = env("DB_PREFIX", default="DB")
 
 
-DATABASES = get_db_config(env, DB_PREFIX)
+
+DATABASES =  {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USERNAME"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": os.getenv("DB_PORT"),
+            "OPTIONS": {"charset": "utf8mb4"},
+            "TEST": {"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_general_ci"},
+        }
+    }

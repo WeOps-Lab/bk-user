@@ -16,5 +16,5 @@ from . import PROJECT_ROOT, env
 # logging
 # ==============================================================================
 
-LOGGING_DIR = env("LOGGING_DIR", default=Path(PROJECT_ROOT) / "logs")
-LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+LOGGING_DIR = "/tmp"
+LOG_LEVEL = "INFO"

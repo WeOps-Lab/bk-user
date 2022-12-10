@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from . import env
+
 from .django_basic import MEDIA_ROOT
 
 # paths for exempting of login
@@ -26,9 +26,9 @@ LOGIN_EXEMPT_WHITE_LIST = (
 )
 
 # name for bk_token in cookie
-TOKEN_COOKIE_NAME = env("TOKEN_COOKIE_NAME", default="bk_token")
-LOGIN_VERIFY_URI = env("LOGIN_VERIFY_URI", default="/accounts/is_login/")
-LOGIN_USER_INFO_URI = env("LOGIN_USER_INFO_URI", default="/accounts/get_user/")
+TOKEN_COOKIE_NAME = "bk_token"
+LOGIN_VERIFY_URI = "/accounts/is_login/"
+LOGIN_USER_INFO_URI = "/accounts/get_user/"
 
 # put on s3 maybe better
 DEFAULT_LOGO_URL = "img/logo_default.png"
@@ -85,16 +85,16 @@ DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
 # ==============================================================================
 # Sentry
 # ==============================================================================
-SENTRY_DSN = env("SENTRY_DSN", default="")
+SENTRY_DSN = ""
 
 # ==============================================================================
 # OTEL
 # ==============================================================================
 # tracing: otel 相关配置
 # if enable, default false
-ENABLE_OTEL_TRACE = env.bool("BKAPP_ENABLE_OTEL_TRACE", default=False)
-BKAPP_OTEL_INSTRUMENT_DB_API = env.bool("BKAPP_OTEL_INSTRUMENT_DB_API", default=False)
-BKAPP_OTEL_SERVICE_NAME = env("BKAPP_OTEL_SERVICE_NAME", default="bk-user-saas")
-BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", default="always_on")
-BKAPP_OTEL_GRPC_HOST = env("BKAPP_OTEL_GRPC_HOST", default="")
-BKAPP_OTEL_DATA_TOKEN = env("BKAPP_OTEL_DATA_TOKEN", default="")
+ENABLE_OTEL_TRACE = False
+BKAPP_OTEL_INSTRUMENT_DB_API = False
+BKAPP_OTEL_SERVICE_NAME = "bk-user-saas"
+BKAPP_OTEL_SAMPLER = "always_on"
+BKAPP_OTEL_GRPC_HOST = ""
+BKAPP_OTEL_DATA_TOKEN = ""
