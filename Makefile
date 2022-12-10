@@ -87,7 +87,7 @@ release-saas:
 	rm -Rf /opt/bk_user_manage/src/bkuser_global &&\
 	cp -Rf ./src/bkuser_global /opt/bk_user_manage/src/ &&\
 	rm -Rf /opt/bk_user_manage/src/bkuser_sdk &&\
-	cp -Rf ./src/sdk /opt/bk_user_manage/src/bkuser_sdk &&\
+	cp -Rf ./src/sdk/bkuser_sdk/ /opt/bk_user_manage/src/ &&\
 	cp -Rf ./VERSION /opt/bk_user_manage &&\
 	cp -Rf ./src/saas/app.yml /opt/bk_user_manage &&\
 	cp -Rf ./src/saas/bk_user_manage.png /opt/bk_user_manage/  &&\

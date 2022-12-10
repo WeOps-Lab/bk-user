@@ -17,27 +17,28 @@ from django.views.i18n import JavaScriptCatalog
 
 from bkuser_shell.organization.views.misc import HeaderFooterViewSet, WebPageViewSet
 
+#TODO: 提取SaaS前缀至环境变量
 urlpatterns = [
-    url(r"^", include("bkuser_shell.account.urls")),
-    url(r"^", include("bkuser_shell.organization.urls")),
-    url(r"^", include("bkuser_shell.config_center.urls")),
-    url(r"^", include("bkuser_shell.password.urls")),
-    url(r"^", include("bkuser_shell.categories.urls")),
-    url("", include("bkuser_shell.sync_tasks.urls")),
-    url(r"^", include("bkuser_shell.config_center.urls")),
-    url(r"^", include("bkuser_shell.audit.urls")),
-    url(r"^", include("bkuser_shell.version_log.urls")),
-    url(r"^", include("bkuser_shell.monitoring.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.account.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.organization.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.password.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.categories.urls")),
+    url("o/bk_user_manage/", include("bkuser_shell.sync_tasks.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.audit.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.version_log.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.monitoring.urls")),
     url(
-        r"^favicon.ico$",
+        r"^o/bk_user_manage/favicon.ico$",
         RedirectView.as_view(url=staticfiles_storage.url("img/favicon.ico")),
     ),
     url(
-        r"^jsi18n/(?P<packages>\S+?)/$",
+        r"^o/bk_user_manage/jsi18n/(?P<packages>\S+?)/$",
         JavaScriptCatalog.as_view(),
         name="javascript-catalog",
     ),
-    url(r"^api/footer/$", HeaderFooterViewSet.as_view({"get": "get"})),
+    url(r"^o/bk_user_manage/api/footer/$", HeaderFooterViewSet.as_view({"get": "get"})),
 ]
 
 # 当且仅当前端独立部署时托管 STATIC_URL 路由
@@ -45,12 +46,12 @@ if settings.IS_PAGES_INDEPENDENT_DEPLOYMENT:
     urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 urlpatterns += [
-    url(r"^", include("bkuser_shell.apis.urls")),
-    url(r"^", include("django_prometheus.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.apis.urls")),
+    url(r"^o/bk_user_manage/", include("django_prometheus.urls")),
 ]
 
 if "silk" in settings.INSTALLED_APPS:
-    urlpatterns += [url(r"^silk/", include("silk.urls", namespace="silk"))]
+    urlpatterns += [url(r"^o/bk_user_manage/silk/", include("silk.urls", namespace="silk"))]
 
 # 其余path交由前端处理
 urlpatterns += [url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index")]
