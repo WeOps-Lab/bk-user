@@ -18,11 +18,11 @@ django==3.2.15
 djangorestframework==3.12.4
 drf-yasg==1.20.0
 et-xmlfile==1.1.0
-gevent==21.1.2
+gevent==1.2.2
 googleapis-common-protos==1.56.2
 greenlet==1.1.2
-grpcio==1.46.3
-gunicorn==19.9.0
+grpcio==1.48.2
+gunicorn==19.6.0
 idna==3.3
 immutables==0.18
 inflection==0.5.1

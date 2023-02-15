@@ -38,6 +38,7 @@ MIDDLEWARE = [
     "bkuser_global.middlewares.RequestProvider",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "bkuser_shell.account.middlewares.CrossCSRF4WEOPS",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

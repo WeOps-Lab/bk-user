@@ -99,7 +99,7 @@ libraries:
 
 
   - name: gevent
-    version: 21.1.2
+    version: 1.2.2
 
 
   - name: googleapis-common-protos
@@ -111,11 +111,11 @@ libraries:
 
 
   - name: grpcio
-    version: 1.46.3
+    version: 1.48.2
 
 
   - name: gunicorn
-    version: 19.9.0
+    version: 19.6.0
 
 
   - name: idna

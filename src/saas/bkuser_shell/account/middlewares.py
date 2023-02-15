@@ -9,9 +9,18 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.utils.module_loading import import_string
-
+from django.utils.deprecation import MiddlewareMixin
 from bkuser_shell.account.conf import ConfFixture
 
+
+class CrossCSRF4WEOPS(MiddlewareMixin):
+    def process_request(self, request):
+        # weops微前端定义得参数为AUTH-APP
+        auth_app = request.META.get("HTTP_AUTH_APP")
+        # 当自定义参数为"WEOPS"时，豁免csrf验证
+        if auth_app and auth_app == "WEOPS":
+            setattr(request, "_dont_enforce_csrf_checks", True)
+            
 
 def load_middleware(middleware):
     path = "bkuser_shell.account.components.{middleware}".format(middleware=middleware)
