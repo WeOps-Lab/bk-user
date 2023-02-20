@@ -6,6 +6,9 @@ chart_repo ?=
 namespace ?= "bk-user"
 test_release_name ?= "bk-user-test"
 
+USERMGR_API_RELEASE_PATH=/opt/release/usermgr
+VENV_PATH=/tmp/venv
+USERMGR_SAAS_RELEASE_PATH=/opt/release/bk_user_manage
 generate-release-md:
 	rm docs/changelogs/*.md || true
 	cd src/saas/ && mkdir -p changelogs/ && poetry run python manage.py generate_release_md
@@ -63,38 +66,39 @@ helm-publish: deploy/helm/dist/*.tgz
 	done
 
 release-api:
-	rm -Rf /opt/usermgr  &&\
-	mkdir -p /opt/usermgr &&\
-	cp -Rf ./src/api /opt/usermgr &&\
-	rm -Rf /opt/usermgr/api/bkuser_global &&\
-	cp -Rf ./src/bkuser_global /opt/usermgr/api/bkuser_global &&\
-	cp -Rf ./src/api/support-files /opt/usermgr &&\
-	cp -Rf ./VERSION /opt/usermgr &&\
-	cp -Rf ./src/api/projects.yaml /opt/usermgr &&\
-	pip3 download  -i https://mirrors.cloud.tencent.com/pypi/simple -r ./src/api/requirements.txt -d /opt/usermgr/pkgs &&\
-	cd /opt &&\
-	tar -zcvf ./usermgr_ce-2.4.2-bkofficial.tar.gz usermgr/
+	rm -Rf $(USERMGR_API_RELEASE_PATH)
+	mkdir -p $(USERMGR_API_RELEASE_PATH)
+
+	cp -Rf ./src/api $(USERMGR_API_RELEASE_PATH)
+	rm -Rf $(USERMGR_API_RELEASE_PATH)/bkuser_global
+	cp -Rf ./src/bkuser_global $(USERMGR_API_RELEASE_PATH)/api/bkuser_global
+	cp -Rf ./src/api/support-files $(USERMGR_API_RELEASE_PATH)
+	cp -Rf ./VERSION $(USERMGR_API_RELEASE_PATH)
+	cp -Rf ./src/api/projects.yaml $(USERMGR_API_RELEASE_PATH)
+
+	virtualenv $(VENV_PATH) -p python3
+	$(VENV_PATH)/bin/pip3 download -r ./src/api/requirements.txt -d $(USERMGR_API_RELEASE_PATH)/pkgs
+	
+	rm -Rf $(VENV_PATH)
+	cp -Rf $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/prod.py $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/dev.py
+
+
 
 release-saas:
-	# cd ./src/pages &&\
-	# npm install    &&\
-	# npm run build  &&\
-	# cd ../..  &&\
-	rm -Rf /opt/bk_user_manage   &&\
-	mkdir -p /opt/bk_user_manage/ &&\
-	cp -Rf ./src/saas /opt/bk_user_manage/src &&\
-	cp -Rf ./src/pages/dist /opt/bk_user_manage/src/static &&\
-	rm -Rf /opt/bk_user_manage/src/bkuser_global &&\
-	cp -Rf ./src/bkuser_global /opt/bk_user_manage/src/ &&\
-	rm -Rf /opt/bk_user_manage/src/bkuser_sdk &&\
-	cp -Rf ./src/sdk/bkuser_sdk/ /opt/bk_user_manage/src/ &&\
-	cp -Rf ./VERSION /opt/bk_user_manage &&\
-	cp -Rf ./src/saas/app.yml /opt/bk_user_manage &&\
-	cp -Rf ./src/saas/bk_user_manage.png /opt/bk_user_manage/  &&\
-	mkdir -p /opt/bk_user_manage/pkgs &&\
-	pip3 download  -i https://mirrors.cloud.tencent.com/pypi/simple -r ./src/saas/requirements.txt -d /opt/bk_user_manage/pkgs &&\
-	pip3 download cffi==1.15.0  -i https://mirrors.cloud.tencent.com/pypi/simple -d /opt/bk_iam/pkgs  &&\
-    pip3 download idna==2.1  -i https://mirrors.cloud.tencent.com/pypi/simple -d /opt/bk_iam/pkgs  &&\
-    pip3 download pycparser==2.2  -i https://mirrors.cloud.tencent.com/pypi/simple -d /opt/bk_iam/pkgs  &&\
-	cd /opt/  &&\
-	tar -zcvf ./bk_user_manage_V2.4.2-bkofficial.tar.gz bk_user_manage/
+	cd ./src/pages &&  npm install && npm run build
+	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)
+	mkdir -p $(USERMGR_SAAS_RELEASE_PATH)
+	cp -Rf ./src/saas $(USERMGR_SAAS_RELEASE_PATH)/src
+	cp -Rf ./src/pages/dist $(USERMGR_SAAS_RELEASE_PATH)/src/static
+	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)/src/bkuser_global
+	cp -Rf ./src/bkuser_global $(USERMGR_SAAS_RELEASE_PATH)/src/
+	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)/src/bkuser_sdk
+	cp -Rf ./src/sdk/bkuser_sdk/ $(USERMGR_SAAS_RELEASE_PATH)/src/
+	cp -Rf ./VERSION $(USERMGR_SAAS_RELEASE_PATH)
+	cp -Rf ./src/saas/app.yml $(USERMGR_SAAS_RELEASE_PATH)
+	cp -Rf ./src/saas/bk_user_manage.png $(USERMGR_SAAS_RELEASE_PATH)
+	mkdir -p $(USERMGR_SAAS_RELEASE_PATH)/pkgs
+
+	virtualenv $(VENV_PATH) -p python3
+	$(VENV_PATH)/bin/pip3 download -r $(USERMGR_SAAS_RELEASE_PATH)/src/requirements.txt -d $(USERMGR_SAAS_RELEASE_PATH)/pkgs 
+	rm -Rf $(VENV_PATH)
