@@ -14,7 +14,7 @@ import sys
 if __name__ == "__main__":
 
     # manage.py used to work in dev env
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bkuser_shell.config.overlays.dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bkuser_shell.config.overlays.prod")
 
     try:
         from django.core.management import execute_from_command_line
