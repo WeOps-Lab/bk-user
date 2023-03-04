@@ -77,7 +77,7 @@ release-api:
 	cp -Rf ./src/api/projects.yaml $(USERMGR_API_RELEASE_PATH)
 
 	virtualenv $(VENV_PATH) -p python3
-	$(VENV_PATH)/bin/pip3 download -r ./src/api/requirements.txt -d $(USERMGR_API_RELEASE_PATH)/pkgs
+	$(VENV_PATH)/bin/pip3 download -r ./src/api/requirements.txt -d $(USERMGR_API_RELEASE_PATH)/support-files/pkgs
 	
 	rm -Rf $(VENV_PATH)
 	cp -Rf $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/prod.py $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/dev.py
