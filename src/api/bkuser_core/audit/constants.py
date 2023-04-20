@@ -22,6 +22,7 @@ class LogInFailReason(AutoLowerEnum):
     LOCKED_USER = auto()
     DISABLED_USER = auto()
     EXPIRED_USER = auto()
+    RESIGNED_USER = auto()
     SHOULD_CHANGE_INITIAL_PASSWORD = auto()
 
     _choices_labels = (
@@ -31,8 +32,15 @@ class LogInFailReason(AutoLowerEnum):
         (LOCKED_USER, "用户已锁定"),
         (DISABLED_USER, "用户已删除"),
         (EXPIRED_USER, "用户账号已过期"),
+        (RESIGNED_USER, "用户已离职"),
         (SHOULD_CHANGE_INITIAL_PASSWORD, "需要修改初始密码"),
     )
+
+
+class ResetPasswordFailReason(AutoLowerEnum):
+    BAD_OLD_PASSWORD = auto()
+
+    _choices_labels = ((BAD_OLD_PASSWORD, "原密码校验错误"),)
 
 
 class OperationType(AutoLowerEnum):

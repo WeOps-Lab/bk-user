@@ -23,15 +23,27 @@ export default {
     },
     // 设置新密码
     setByToken(context, params, config = {}) {
-      return http.post('api/v1/password/reset_by_token/', params);
+      return http.post('api/v1/web/passwords/reset/by_token/', params);
     },
     // 修改密码
     modify(context, params, config = {}) {
-      return http.post('api/v1/password/modify/', params);
+      return http.post('api/v1/web/passwords/modify/', params);
     },
     // 邮箱重置密码
     reset(context, params, config = {}) {
-      return http.post('api/v1/password/reset/', params);
+      return http.post('api/v1/web/passwords/reset/send_email/', params);
+    },
+    // 获取短信验证码
+    sendSms(context, params, config = {}) {
+      return http.post('api/v1/web/passwords/reset/verification_code/send_sms/', params);
+    },
+    // 发送验证码
+    sendCode(context, params, config = {}) {
+      return http.post('api/v1/web/passwords/reset/verification_code/verify/', params);
+    },
+    // 获取rsa公钥
+    getRsa(context, params, config = {}) {
+      return http.get(`api/v1/web/passwords/settings/by_token/?token=${params}`);
     },
   },
 };

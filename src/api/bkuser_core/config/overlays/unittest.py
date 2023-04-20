@@ -3,6 +3,7 @@ import os
 
 import ldap3
 
+from bkuser_core.config.common import PROJECT_ROOT
 from bkuser_core.config.common.django_basic import *  # noqa
 from bkuser_core.config.common.logging import *  # noqa
 from bkuser_core.config.common.platform import *  # noqa
@@ -71,6 +72,7 @@ def get_loggers(package_name: str, log_level: str) -> dict:
 
 # patch the unittest logging loggers
 LOGGING["loggers"] = get_loggers("bkuser_core", LOG_LEVEL)
+
 
 # ==============================================================================
 # Test Ldap

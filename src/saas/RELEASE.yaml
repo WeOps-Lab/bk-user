@@ -525,3 +525,77 @@ versions:
         - "新增用户: 日期字段无法编辑"
         - "登录审计: 导出报错"
         - "版本日志: 更新"
+- version: "2.4.2"
+  date: "2022-09-26"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "FIX"
+        content:
+        - "前端: 体验问题优化"
+- version: "2.4.3"
+  date: "2022-10-09"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "FIX"
+        content:
+        - "修复: 用户管理搜索后点击弹出空白抽屉"
+- version: "2.5.0"
+  date: "2022-10-08"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "全新架构，重构 SaaS 层所有功能接口"
+        - "接口性能优化: 优化数据库索引/增加缓存/减少接口 SQL 查询量"
+- version: "2.5.1"
+  date: "2022-11-15"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "remove docs/changelogs"
+      - type: "FIX"
+        content:
+        - "修复: 新增用户或查看某个用户详情触发报错"
+- version: "2.5.2"
+  date: "2022-12-30"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "NEW"
+        content:
+        - "安全: 密码试错次数超过设置，自动锁定账户对admin生效"
+        - "安全: 用户修改密码以及重置密码时密码需加密传输"
+        - "安全: admin账户重置密码需要先输入原密码进行校验"
+        - "重置密码支持短信"
+      - type: "FIX"
+        content:
+        - "修复: xss问题"
+        - "修复: expired_after_days配置导致的异常"
+        - "修复: 审计-登陆日志导出ugettext_lazy 导出失败"
+        - "修复: 职位展示问题"
+        - "修复: 通过excel导入用户组织支持全量更新"
+- version: "2.5.3"
+  date: "2023-04-07"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "NEW"
+        content:
+        - "/api/v1/login 增加iso_code支持国际化手机号"
+        - "apigw隐藏v1/v2 API，更新ping/healthz文档"
+      - type: "OPTIMIZATION"
+        content:
+        - "前端优化: 账号有效期优化&用户信息组件优化"
+        - "前端优化: 蓝鲸产品规范: 表格&搜索状态"
+        - "前端优化: 蓝鲸产品规范--抽屉交互"
+        - "优化用户量大的mad/ldap下用户登录，耗时长"
+      - type: "FIX"
+        content:
+        - "修复: 由于bk_token未unquote导致登出失败问题"
+        - "修复: 忘记密码功能，仍可对异常状态用户发送信息"
+        - "修复: 生产环境下未屏蔽swagger路由的问题"

@@ -1,23 +1,11 @@
 <!--
-  - Tencent is pleased to support the open source community by making Bk-User 蓝鲸用户管理 available.
-  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
-  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
-  -
-  - License for Bk-User 蓝鲸用户管理:
-  - -------------------------------------------------------------------
-  -
-  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
-  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-  - The above copyright notice and this permission notice shall be included in all copies or substantial
-  - portions of the Software.
-  -
-  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  - TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+  - Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+  - Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at http://opensource.org/licenses/MIT
+  - Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  - an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  - specific language governing permissions and limitations under the License.
   -->
 <template>
   <div :class="['look-user-info-wrapper',{ 'forbid-operate': isForbid }]">
@@ -51,20 +39,35 @@
         </bk-button>
         <div class="reset-dialog" v-if="isShowReset" v-click-outside="closeResetDialog">
           <i class="arrow"></i>
+          <template v-if="isAdmin">
+            <h4 class="title">{{$t('原密码')}}</h4>
+            <p class="pw-input-text">
+              <input
+                autocomplete="old-password"
+                :type="passwordInputType['oldPassword']"
+                :placeholder="$t('请输入原密码')"
+                :class="['editor-password',{ 'input-error': isCorrectOldPw }]"
+                :maxlength="32"
+                v-model="oldPassword"
+                v-focus
+                @focus="isCorrectOldPw = false" />
+              <i :class="['bk-icon', oldPasswordIconClass]" @click="changePasswordInputType('oldPassword')"></i>
+            </p>
+          </template>
           <h4 class="title">{{$t('重置密码')}}</h4>
           <p class="pw-input-text">
             <input type="text" class="hidden-password-input">
             <input type="password" class="hidden-password-input">
             <input
               autocomplete="new-password"
-              :type="passwordInputType"
+              :type="passwordInputType['newPassword']"
               :placeholder="$t('请输入新密码')"
               :class="['editor-password',{ 'input-error': isCorrectPw }]"
               :maxlength="32"
               v-model="newPassword"
               v-focus
               @focus="isCorrectPw = false" />
-            <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType"></i>
+            <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType('newPassword')"></i>
           </p>
           <div class="reset-btn">
             <bk-button theme="primary" class="editor-btn" @click="confirmReset">{{$t('确认')}}</bk-button>
@@ -74,51 +77,64 @@
       </div>
     </div>
     <div class="user-detail" data-test-id="activeFieldsData">
-      <div class="user-avatar-wrapper">
+      <div class="user-avatar-wrapper" :style="showUserInfo ? 'display: block' : 'display: none'">
         <img :src="localAvatar || currentProfile.logo" width="68" height="68" @error="handleLoadAvatarError" />
         <p v-if="isForbid" class="forbid-text">{{currentProfile.status === 'DISABLED' ? $t('已禁用') : $t('已锁定')}}</p>
       </div>
       <ul v-if="fieldsList.length">
         <li class="infor-content-list">
-          <h4 class="title">{{$t('用户信息')}}</h4>
-          <div class="specific-text" v-for="(fieldInfo, index) in activeFieldsList" :key="index">
+          <h4 class="title" @click="isUserInfo">
+            <i :class="['bk-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
+            {{$t('用户信息')}}
+          </h4>
+          <div
+            :class="showUserInfo ? 'specific-text' : 'isHide'"
+            v-for="(fieldInfo, index) in activeFieldsList" :key="index">
             <span class="name" v-bk-overflow-tips>{{fieldInfo.name}}</span>
             <span class="gap">：</span>
             <div class="desc" v-if="fieldInfo.key === 'telephone'" @click="viewTelephone">
               <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
             </div>
             <div class="desc" v-else>
-              <p class="text">{{fieldInfo.value || '--'}}</p>
+              <p v-if="fieldInfo.key === 'account_expiration_date'" class="text">
+                {{getExpireDays(fieldInfo.value)}}
+              </p>
+              <p v-else class="text">{{$xssVerification(fieldInfo.value || '') || '--'}}</p>
             </div>
           </div>
         </li>
         <li class="infor-content-list">
-          <h4 class="title">{{$t('用户设置')}}</h4>
-          <div class="specific-text">
-            <span class="name">{{$t('所在组织')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <template v-for="(item, index) in currentProfile.department_name">
-                <span :key="index" class="text" v-bk-overflow-tips>{{item}}</span>
-              </template>
-            </p>
-          </div>
-          <div class="specific-text">
-            <span class="name">{{$t('直接上级')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <span class="text tag-text" v-if="currentProfile.leader && currentProfile.leader.length">
-                {{switchTag(currentProfile.leader)}}
-              </span>
-              <span class="text" v-else>--</span>
-            </p>
-          </div>
-          <div class="specific-text">
-            <span class="name">{{$t('密码有效期')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <span class="text">{{passwordValidDays}}</span>
-            </p>
+          <h4 class="title" @click="isUserSetting">
+            <i :class="['bk-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
+            {{$t('用户设置')}}
+          </h4>
+          <div :style="showUserSetting ? 'display: block' : 'display: none'">
+            <div class="specific-text">
+              <span class="name">{{$t('所在组织')}}</span>
+              <span class="gap">：</span>
+              <p class="desc">
+                <template v-for="(item, index) in currentProfile.department_name">
+                  <span :key="index" class="text" v-bk-overflow-tips>{{item}}</span>
+                </template>
+              </p>
+            </div>
+            <div class="specific-text">
+              <span class="name">{{$t('直接上级')}}</span>
+              <span class="gap">：</span>
+              <p class="desc">
+                <span class="text tag-text" v-if="currentProfile.leader && currentProfile.leader.length">
+                  {{switchTag(currentProfile.leader)}}
+                </span>
+                <span class="text" v-else>--</span>
+              </p>
+            </div>
+            <div class="specific-text">
+              <span class="name">{{$t('密码有效期')}}</span>
+              <span class="gap">：</span>
+              <p class="desc">
+                <span class="text">{{passwordValidDays}}</span>
+              </p>
+            </div>
           </div>
         </li>
       </ul>
@@ -127,7 +143,8 @@
 </template>
 
 <script>
-import { dateConvert } from '@/common/util';
+import { dateConvert, expireDate } from '@/common/util';
+const Base64 = require('js-base64').Base64;
 export default {
   directives: {
     focus: {
@@ -174,12 +191,23 @@ export default {
       localAvatar: '',
       isForbid: false,
       phoneNumber: this.$t('点击查看'),
+      isCorrectOldPw: false,
       isCorrectPw: false,
       // 是否显示重置密码的弹窗
       isShowReset: false,
+      oldPassword: '',
       newPassword: '',
-      passwordInputType: 'password',
+      passwordInputType: {
+        oldPassword: 'password',
+        newPassword: 'password',
+      },
       passwordRules: null,
+      // 公钥
+      publicKey: '',
+      // 是否rsa加密
+      isRsaEncrypted: false,
+      showUserInfo: true,
+      showUserSetting: true,
     };
   },
   computed: {
@@ -188,8 +216,11 @@ export default {
         return fieldInfo.key !== 'department_name' && fieldInfo.key !== 'leader';
       });
     },
+    oldPasswordIconClass() {
+      return this.passwordInputType.oldPassword === 'password' ? 'icon-hide' : 'icon-eye';
+    },
     passwordIconClass() {
-      return this.passwordInputType === 'password' ? 'icon-hide' : 'icon-eye';
+      return this.passwordInputType.newPassword === 'password' ? 'icon-hide' : 'icon-eye';
     },
     passwordValidDays() {
       return this.$store.state.passwordValidDaysList.find(item => (
@@ -221,9 +252,9 @@ export default {
     // 获取用户信息
     getUserInfo() {
       this.activeFieldsList.forEach((item) => {
-        if (item.options.length > 0) {
+        if ((item.options || []).length > 0) {
           item.options.map((key) => {
-            if (key.id === this.currentProfile[item.key]) {
+            if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
               item.value = key.value;
             }
           });
@@ -281,11 +312,27 @@ export default {
       this.phoneNumber = this.currentProfile.telephone;
     },
     // 重置密码
-    showResetDialog() {
+    async showResetDialog() {
       if (this.isForbid) {
         return;
       }
       this.isShowReset = true;
+      // 清空上次输入
+      this.oldPassword = '';
+      this.newPassword = '';
+      const res = await this.$store.dispatch('catalog/ajaxGetPassport', {
+        id: this.currentCategoryId,
+      });
+      if (res.data) {
+        res.data.forEach((item) => {
+          if (item.key === 'enable_password_rsa_encrypted') {
+            this.isRsaEncrypted = item.value;
+          }
+          if (item.key === 'password_rsa_public_key') {
+            this.publicKey = Base64.decode(item.value);
+          }
+        });
+      }
     },
     // 验证密码的格式
     async confirmReset() {
@@ -321,6 +368,18 @@ export default {
       }
       if (this.passwordRules) {
         // 如果上面拿到了规则就进行前端校验
+        // 原密码校验, 任何人在重置admin密码时，需要先输入原密码
+        if (this.isAdmin) {
+          this.isCorrectOldPw = !this.$validatePassportByRules(this.oldPassword, this.passwordRules);
+          if (this.isCorrectOldPw) {
+            this.$bkMessage({
+              message: this.$getMessageByRules(this, this.passwordRules),
+              theme: 'error',
+            });
+            return;
+          }
+        }
+        // 新密码校验
         this.isCorrectPw = !this.$validatePassportByRules(this.newPassword, this.passwordRules);
         if (this.isCorrectPw) {
           this.$bkMessage({
@@ -334,19 +393,41 @@ export default {
         return;
       }
       this.clickSecond = true;
-      try {
-        this.$emit('showBarLoading');
-        await this.$store.dispatch('organization/patchProfile', {
-          id: this.currentProfile.id,
-          data: {
+      this.$emit('showBarLoading');
+      let data = {};
+      // 任何人在重置admin密码时，需要先输入原密码
+      if (this.isAdmin) {
+        if (this.isRsaEncrypted) {
+          data = {
+            password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey),
+            old_password: this.Rsa.rsaPublicData(this.oldPassword.trim(), this.publicKey),
+          };
+        } else {
+          data = {
             password: this.newPassword.trim(),
-          },
+            old_password: this.oldPassword.trim(),
+          };
+        }
+      } else {
+        if (this.isRsaEncrypted) {
+          data = { password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey) };
+        } else {
+          data = { password: this.newPassword.trim() };
+        }
+      }
+      this.patchProfile(this.currentProfile.id, data);
+      this.isShowReset = false;
+    },
+    async patchProfile(id, data) {
+      try {
+        await this.$store.dispatch('organization/patchProfile', {
+          id,
+          data,
         });
         this.$bkMessage({
           message: this.$t('重置密码成功'),
           theme: 'success',
         });
-        this.isShowReset = false;
       } catch (e) {
         console.warn(e);
       } finally {
@@ -357,13 +438,25 @@ export default {
     closeResetDialog(e) {
       if (e.target.innerText === '重置密码') return;
       this.isShowReset = false;
+      // 清空
+      this.oldPassword = '';
+      this.newPassword = '';
     },
     // 查看密码
-    changePasswordInputType() {
-      this.passwordInputType = this.passwordInputType === 'password' ? 'text' : 'password';
+    changePasswordInputType(type = 'newPassword') {
+      this.passwordInputType[type] = this.passwordInputType[type] === 'password' ? 'text' : 'password';
     },
     handleLoadAvatarError() {
       this.localAvatar = this.$store.state.localAvatar;
+    },
+    isUserInfo() {
+      this.showUserInfo = !this.showUserInfo;
+    },
+    isUserSetting() {
+      this.showUserSetting = !this.showUserSetting;
+    },
+    getExpireDays(val) {
+      return expireDate(val);
     },
   },
 };
@@ -374,7 +467,7 @@ export default {
 
 .look-user-info-wrapper {
   height: 100%;
-  padding: 30px 0;
+  padding: 24px 40px;
 
   &.forbid-operate {
     .bk-button {
@@ -416,7 +509,6 @@ export default {
 .action-btn-wrapper {
   font-size: 0;
   position: relative;
-  margin: 0 30px;
 
   .editor-btn {
     /*width: 76px !important;*/
@@ -516,7 +608,6 @@ export default {
 .user-detail {
   position: relative;
   height: calc(100% - 36px);
-  padding: 0 30px;
   overflow: hidden;
   overflow-y: auto;
 
@@ -553,13 +644,19 @@ export default {
   }
 
   .title {
-    padding: 17px 0 8px 0;
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin: 20px 0;
+    font-size: 12px;
     font-weight: bold;
-    color: rgba(51, 60, 72, 1);
-    line-height: 19px;
-    border-bottom: 1px solid #dde4eb;
+    color: #313238;
+    line-height: 30px;
+    background-color: #F0F1F5;
+    i {
+      margin-left: 5px;
+      color: #979BA5;
+    }
+    &:hover {
+      cursor: pointer;
+    }
   }
 
   .specific-text {
@@ -606,6 +703,9 @@ export default {
         }
       }
     }
+  }
+  .isHide {
+    display: none;
   }
 }
 </style>

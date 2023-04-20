@@ -33,6 +33,8 @@ logger = logging.getLogger(__name__)
 
 PULL_INTERVAL_SETTING_KEY = "pull_cycle"
 
+DEFAULT_MIN_SYNC_PERIOD = 60
+
 
 def update_or_create_sync_tasks(instance: "Setting", operator: str):
     """尝试创建或更新同步数据任务"""
@@ -42,7 +44,7 @@ def update_or_create_sync_tasks(instance: "Setting", operator: str):
     cycle_value = int(instance.value)
     config_provider = ConfigProvider(instance.category_id)
 
-    min_sync_period = config_provider.get("min_sync_period")
+    min_sync_period = config_provider.get("min_sync_period", DEFAULT_MIN_SYNC_PERIOD)
     if cycle_value <= 0:
         # 特殊约定，当设置 <= 0 时，删除周期任务
         delete_periodic_sync_task(category_id=instance.category_id)
@@ -85,12 +87,18 @@ def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
 def update_sync_tasks(sender, instance: "Setting", operator: str, **kwargs):
     if instance.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         logger.warning(
-            "category<%s> is %s, not a ldap or mad category, skip update sync tasks", instance.id, instance.type
+            "category<%s> is %s, not a ldap or mad category, skip update sync tasks",
+            instance.category.id,
+            instance.category.type,
         )
         return
 
     # 针对 pull_cycle 配置更新同步任务
-    logger.info("going to update periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
+    logger.info(
+        "going to update periodic task for Category<%s>, the category type is %s",
+        instance.category.id,
+        instance.category.type,
+    )
     update_or_create_sync_tasks(instance, operator)
 
 
