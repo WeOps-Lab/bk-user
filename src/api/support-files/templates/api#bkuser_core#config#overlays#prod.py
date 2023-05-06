@@ -65,7 +65,12 @@ CERTIFICATE_SERVER_DOMAIN = "__BK_LICENSE_PRIVATE_ADDR__"
 CACHES = {
     "default": {
         "BACKEND": "bkuser_core.common.cache.DummyRedisCache",
-    }
+    },
+    "locmem": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "memory_cache_0",
+        "KEY_PREFIX": "bk_user",
+    },
 }
 # 全局缓存过期时间，默认为一小时
 GLOBAL_CACHES_TIMEOUT = env.int("GLOBAL_CACHES_TIMEOUT", default=60 * 60)
@@ -83,6 +88,7 @@ REDIS_URL = ""
 REDIS_KEY_PREFIX = env("CACHE_REDIS_KEY_PREFIX", default="bk-user-")
 CELERY_BROKER_URL = "amqp://__BK_USERMGR_RABBITMQ_USERNAME__:__BK_USERMGR_RABBITMQ_PASSWORD__@__BK_USERMGR_RABBITMQ_HOST__:__BK_USERMGR_RABBITMQ_PORT__/__BK_USERMGR_RABBITMQ_VHOST__"
 CELERY_RESULT_BACKEND = "amqp://__BK_USERMGR_RABBITMQ_USERNAME__:__BK_USERMGR_RABBITMQ_PASSWORD__@__BK_USERMGR_RABBITMQ_HOST__:__BK_USERMGR_RABBITMQ_PORT__/__BK_USERMGR_RABBITMQ_VHOST__"
+
 
 # ==============================================================================
 # IAM
@@ -118,7 +124,6 @@ ACTION_ID_HEADER = "HTTP_ACTION_ID"
 # ===============================================================================
 INTERNAL_AUTH_TOKENS = {"TCwCnoiuUgPccj8y0Wx187vJBqzqddfLlm": {"username": "iadmin"}}
 ACCESS_APP_WHITE_LIST = {"bk-iam": "lLP3gabV8M0C9vbwHQwzSYJX3WumcJsDSdVNQtq6FJVCLqJX6o"}
-
 
 # ==============================================================================
 # 登陆相关
