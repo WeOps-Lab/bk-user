@@ -91,7 +91,6 @@ release-saas:
 	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)/src/bkuser_global
 	cp -Rf ./src/bkuser_global $(USERMGR_SAAS_RELEASE_PATH)/src/
 	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)/src/bkuser_sdk
-	cp -Rf ./src/sdk/bkuser_sdk/ $(USERMGR_SAAS_RELEASE_PATH)/src/
 	cp -Rf ./VERSION $(USERMGR_SAAS_RELEASE_PATH)
 	cp -Rf ./src/saas/app.yml $(USERMGR_SAAS_RELEASE_PATH)
 	cp -Rf ./src/saas/bk_user_manage.png $(USERMGR_SAAS_RELEASE_PATH)
