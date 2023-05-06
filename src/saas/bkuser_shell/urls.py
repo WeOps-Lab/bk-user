@@ -21,7 +21,7 @@ from bkuser_shell.proxy.views import WebPageViewSet
 urlpatterns = [
     url(r"^o/bk_user_manage/", include("bkuser_shell.account.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.proxy.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
+    # url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.password.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.categories.urls")),
     url("o/bk_user_manage/", include("bkuser_shell.sync_tasks.urls")),
