@@ -118,12 +118,21 @@ error_codes.add_codes(
         ErrorCode("USER_IS_DELETED", _("账号已被删除，请联系管理员"), 3210022),
         ErrorCode("CATEGORY_PLUGIN_LOAD_FAIL", _("目录登录插件加载失败"), 3210023),
         ErrorCode("USER_IS_EXPIRED", _("该用户账号已过期"), 3210024),
+        ErrorCode("USER_IS_RESIGNED", _("该用户账号已离职"), 3210025),
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
         ErrorCode("USER_ALREADY_EXISTED", _("该目录下此用户名已存在"), status_code=HTTP_409_CONFLICT),
         ErrorCode("SAVE_USER_INFO_FAILED", _("保存用户信息失败")),
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
+        ErrorCode("TELEPHONE_NOT_PROVIDED", _("该用户没有绑定手机号，发送短信失败")),
+        ErrorCode("TELEPHONE_BOUND_TO_MULTI_PROFILE", _("该手机号被多个用户绑定，请输入具体的用户名或联系管理员处理")),
+        ErrorCode("VERIFICATION_CODE_REPEAT_SENDING_REQUIRE", _("验证码已发送，有效时间为{effective_minutes}分钟，请勿重复发送")),
+        ErrorCode("VERIFICATION_CODE_SEND_REACH_LIMIT", _("该手机号已超过当日重置密码短信发送限制次数")),
+        ErrorCode("VERIFICATION_CODE_INVALID", _("验证码失效，请重新发送")),
+        ErrorCode("VERIFICATION_CODE_WRONG", _("你所输入验证码错误，请重新输入")),
+        ErrorCode("VERIFICATION_CODE_WRONG_REACH_LIMIT", _("你所输入验证码错误，验证次数已达上限，请验证码过期后重试")),
+        ErrorCode("OLD_PASSWORD_ERROR", _("原密码校验失败")),
         # 上传文件相关
         ErrorCode("FILE_IMPORT_TOO_LARGE", _("上传文件过大")),
         ErrorCode("FILE_IMPORT_FORMAT_ERROR", _("上传文件格式错误")),
@@ -138,6 +147,7 @@ error_codes.add_codes(
         ErrorCode("LOAD_LDAP_CLIENT_FAILED", _("加载 LDAP Client 失败")),
         ErrorCode("LOAD_LOGIN_HANDLER_FAILED", _("登陆校验失败")),
         ErrorCode("SYNC_DATA_FAILED", _("同步数据失败")),
+        ErrorCode("CREATE_SYNC_TASK_FAILED", _("创建同步任务失败")),
         ErrorCode("LOAD_DATA_ADAPTER_FAILED", _("加载数据同步模块失败")),
         ErrorCode("SAVE_DATA_FAILED", _("存储同步数据失败")),
         ErrorCode("TEST_CONNECTION_UNSUPPORTED", _("用户目录不支持测试连接")),
@@ -146,11 +156,13 @@ error_codes.add_codes(
         ErrorCode("CANNOT_MANUAL_WRITE_INTO", _("该用户目录不能够手动写入数据")),
         ErrorCode("CATEGORY_TYPE_NOT_SUPPORTED", _("当前运行版本不支持此用户目录类型")),
         ErrorCode("PLUGIN_NOT_FOUND", _("找不到指定名称的插件")),
+        ErrorCode("LOCAL_CATEGORY_NEEDS_EXCEL_FILE", _("本地目录需要Excel文件同步数据")),
         # 配置相关
         ErrorCode("CANNOT_FIND_SETTING_META", _("找不到对应的配置元信息")),
         ErrorCode("CANNOT_CREATE_SETTING", _("无法创建配置")),
         ErrorCode("CANNOT_UPDATE_SETTING", _("无法更新配置")),
         # 组织架构相关
+        ErrorCode("CANNOT_FIND_DEPARTMENT", _("找不到对应的部门")),
         ErrorCode("DEPARTMENT_NAME_CONFLICT", _("同一个部门下子部门命名冲突")),
         # 用户字段相关
         ErrorCode("FIELD_IS_NOT_EDITABLE", _("字段不能被编辑")),
@@ -159,7 +171,12 @@ error_codes.add_codes(
         ErrorCode("PROFILE_TOKEN_EXPIRED", _("用户Token已过期，请重新申请")),
         ErrorCode("CANNOT_GET_TOKEN_HOLDER", _("无法获取有效的用户 Token")),
         # 权限相关
-        ErrorCode("ACTION_UNKNOWN", _("未知权限项")),
-        ErrorCode("ACTION_ID_MISSING", _("权限项缺失")),
+        # ErrorCode("ACTION_UNKNOWN", _("未知权限项")),
+        # ErrorCode("ACTION_ID_MISSING", _("权限项缺失")),
+        ErrorCode("CANNOT_DELETE_DEPARTMENT", _("不能删除部门")),
+        ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
+        # 用户字段
+        ErrorCode("UNKNOWN_FIELD", _("未知自定义字段")),
+        ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
     ]
 )

@@ -42,7 +42,7 @@ IS_PAGES_INDEPENDENT_DEPLOYMENT = False
 ############
 # Core API #
 ############
-BK_USER_CORE_API_HOST = "http://usermgr.service.consul:8009"
+BK_USER_CORE_API_HOST = os.getenv("BKAPP_BK_USER_CORE_API_HOST", default="http://usermgr.service.consul:8009")
 # API_AUTH_TOKEN_PAIR = (
 #     "Authorization",
 #     f"iBearer {env('API_AUTO_TOKEN', default='HVp5CNn4th87w5MLT8x1FJw6Rcc5cF3SRT7NlcFILgij')}",

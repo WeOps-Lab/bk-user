@@ -1,23 +1,11 @@
 <!--
-  - Tencent is pleased to support the open source community by making Bk-User 蓝鲸用户管理 available.
-  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
-  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
-  -
-  - License for Bk-User 蓝鲸用户管理:
-  - -------------------------------------------------------------------
-  -
-  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
-  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-  - The above copyright notice and this permission notice shall be included in all copies or substantial
-  - portions of the Software.
-  -
-  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  - TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+  - Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+  - Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at http://opensource.org/licenses/MIT
+  - Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  - an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  - specific language governing permissions and limitations under the License.
   -->
 <template>
   <div class="member-infor-wrapper" v-bkloading="{ isLoading: detailsBarInfo.basicLoading }">
@@ -40,32 +28,48 @@
     <div class="add-user-infor" v-else>
       <div class="user-infor-wrapper" ref="userInforWrapper">
         <div class="information-box" data-test-id="superiorData">
-          <h4 class="infor-title">{{$t('用户信息')}}</h4>
-          <div class="fill-infor-wrapper">
+          <h4 class="infor-title" @click="isUserInfo">
+            <i :class="['bk-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
+            {{$t('用户信息')}}
+          </h4>
+          <div :class="showUserInfo ? 'fill-infor-wrapper' : 'isHide'">
             <InputComponents
               :edit-status="detailsBarInfo.type === 'edit'"
               :profile-info-list="profileInfoList"
-              :status-map="statusMap" />
+              :status-map="statusMap"
+              :rules="rules"
+              :expire-date="currentProfile"
+              ref="userInfoData" />
             <UploadAvatar
               @getBase64="getBase64"
               :img-src="currentProfile === null ? $store.state.localAvatar : currentProfile.logo" />
           </div>
-          <h4 class="infor-title" style="margin-top: 37px">{{$t('用户设置')}}</h4>
-          <ul class="mark-width">
-            <li class="infor-list">
-              <p class="desc">{{$t('直接上级')}}</p>
-              <div class="input-text leader-input" ref="leaderInput">
+          <h4 class="infor-title" style="margin-top: 30px" @click="isUserSetting">
+            <i :class="['bk-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
+            {{$t('用户设置')}}
+          </h4>
+          <div :class="showUserSetting ? 'mark-width' : 'isHide'">
+            <bk-form
+              :model="userSettingData"
+              form-type="vertical">
+              <bk-form-item
+                class="leader-input"
+                :label="$t('直接上级')"
+                :required="false"
+                :property="'leader'"
+                :error-display-type="'normal'">
                 <bk-select
                   v-if="showselectData || detailsBarInfo.type === 'add'"
                   searchable
                   multiple
                   display-tag
-                  v-model="leaderIdList"
+                  v-model="userSettingData.leader"
                   :remote-method="selectData"
                   :list="rtxList"
                   ext-popover-cls="scrollview"
                   @toggle="handleBranchToggle"
-                  :scroll-height="188">
+                  :scroll-height="188"
+                  @change="changSelect">
                   <bk-option
                     v-for="option in rtxList"
                     :key="option.id"
@@ -78,8 +82,9 @@
                   searchable
                   multiple
                   display-tag
-                  v-model="leaderIdList"
-                  @toggle="handleBranchToggle">
+                  v-model="userSettingData.leader"
+                  @toggle="handleBranchToggle"
+                  @change="changSelect">
                   <bk-option
                     v-for="option in currentProfile.leader"
                     :key="option.id"
@@ -90,20 +95,24 @@
                 <div class="input-loading" @click.stop v-show="showLeaderLoading">
                   <img src="../../../images/svg/loading.svg" alt="">
                 </div>
-              </div>
-            </li>
-            <li class="infor-list">
-              <p class="desc">{{$t('所在组织')}}<span class="star">*</span></p>
-              <div class="input-text" @click="showSetDepartments">
-                <span class="select-text">
-                  {{formatDepartments(initialDepartments)}}
-                </span>
-              </div>
-            </li>
-            <li class="infor-list">
-              <p class="desc">{{$t('密码有效期')}}<span class="star">*</span></p>
-              <div class="input-text">
-                <bk-select v-model="passwordValidDays" :clearable="false">
+              </bk-form-item>
+              <bk-form-item
+                :label="$t('所在公司')"
+                :required="true"
+                :property="'department_name'"
+                :error-display-type="'normal'">
+                <div class="input-text" @click="showSetDepartments">
+                  <span class="select-text">
+                    {{formatDepartments(initialDepartments)}}
+                  </span>
+                </div>
+              </bk-form-item>
+              <bk-form-item
+                :label="$t('密码有效期')"
+                :required="true"
+                :property="'password_valid_days'"
+                :error-display-type="'normal'">
+                <bk-select v-model="userSettingData.password_valid_days" :clearable="false" @change="changSelect">
                   <bk-option
                     v-for="option in passwordValidDaysList"
                     :key="option.days"
@@ -111,9 +120,9 @@
                     :name="option.text">
                   </bk-option>
                 </bk-select>
-              </div>
-            </li>
-          </ul>
+              </bk-form-item>
+            </bk-form>
+          </div>
         </div>
       </div>
       <div class="action-btn">
@@ -199,16 +208,12 @@ export default {
       profileInfoList: [],
       // 修改头像后从后台获取的 id，保存时上传
       AvatarBase64: '',
-      // 直接上级，[1, 2, 3]
-      leaderIdList: [],
       showLeaderLoading: false,
       isShowSetDepartments: false,
       initialDepartments: [],
       // 选择的组织
       getSelectedDepartments: [],
       rtxListUpdated: false,
-      // 密码有效期
-      passwordValidDays: null,
       paginationConfig: {
         current: 1,
         count: 1,
@@ -220,6 +225,73 @@ export default {
       copyList: [],
       timer: null,
       showselectData: false,
+      // 不展示的字段
+      hiddenFields: ['department_name', 'leader', 'last_login_time', 'create_time'],
+      showUserInfo: true,
+      showUserSetting: true,
+      // 用户设置字段
+      userSettingData: {
+        leader: [],
+        department_name: [],
+        password_valid_days: null,
+      },
+      rules: {
+        username: [
+          {
+            required: true,
+            message: this.$t('必填项'),
+            trigger: 'blur',
+          },
+          {
+            max: 32,
+            message: this.$t('不能多于32个字符'),
+            trigger: 'blur',
+          },
+          {
+            regex: /^[a-zA-Z0-9][0-9a-zA-Z_.-]{0,31}$/,
+            message: this.$t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
+            trigger: 'blur',
+          },
+        ],
+        display_name: [
+          {
+            required: true,
+            message: this.$t('必填项'),
+            trigger: 'blur',
+          },
+          {
+            max: 32,
+            message: this.$t('不能多于32个字符'),
+            trigger: 'blur',
+          },
+        ],
+        email: [
+          {
+            required: true,
+            message: this.$t('必填项'),
+            trigger: 'blur',
+          },
+          {
+            regex: /^([A-Za-z0-9_\-.])+@([A-Za-z0-9_\-.])+\.[A-Za-z]+$/,
+            message: this.$t('请输入正确的邮箱地址'),
+            trigger: 'blur',
+          },
+        ],
+        status: [
+          {
+            required: true,
+            message: this.$t('请选择账户状态'),
+            trigger: 'blur',
+          },
+        ],
+        staff_status: [
+          {
+            required: true,
+            message: this.$t('请选择在职状态'),
+            trigger: 'blur',
+          },
+        ],
+      },
     };
   },
   computed: {
@@ -236,7 +308,7 @@ export default {
         fieldsList.push(item);
       });
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
-        if (fieldInfo.key === 'department_name' || fieldInfo.key === 'leader') {
+        if (this.hiddenFields.includes(fieldInfo.key)) {
           return false;
         }
         fieldInfo.holder = this.$t('请输入');
@@ -245,9 +317,10 @@ export default {
         return true;
       });
       this.initialDepartments = this.detailsBarInfo.departments;
+      this.userSettingData.department_name = this.formatDepartments(this.initialDepartments);
       this.getSelectedDepartments = this.initialDepartments;
       this.$store.dispatch('catalog/ajaxGetPassport', { id: this.currentCategoryId }).then((res) => {
-        this.passwordValidDays = res.data.find(item => item.key === 'password_valid_days').value;
+        this.userSettingData.password_valid_days = res.data.find(item => item.key === 'password_valid_days').value;
       });
     }
     // 进入页面获取数据
@@ -302,7 +375,7 @@ export default {
     editProfile() {
       const fieldsList = JSON.parse(JSON.stringify(this.fieldsList));
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
-        if (fieldInfo.key === 'department_name' || fieldInfo.key === 'leader') {
+        if (this.hiddenFields.includes(fieldInfo.key)) {
           return false;
         } if (fieldInfo.key === 'telephone') {
           fieldInfo.iso_code = this.currentProfile.iso_code || 'cn';
@@ -314,11 +387,12 @@ export default {
         fieldInfo.isError = false;
         return true;
       });
-      this.leaderIdList = this.currentProfile.leader.map(item => item.id)
-        || this.currentProfile.leaders.map(item => item.id);
+      const { leader, leaders } = this.currentProfile;
+      this.userSettingData.leader = (leader || leaders).map(item => item.id);
       this.initialDepartments = this.currentProfile.departments;
+      this.userSettingData.department_name = this.formatDepartments(this.initialDepartments);
       this.getSelectedDepartments = this.initialDepartments;
-      this.passwordValidDays = this.currentProfile.password_valid_days;
+      this.userSettingData.password_valid_days = this.currentProfile.password_valid_days;
 
       // 让父组件去修改 detailsBarInfo.type = 'edit'
       this.$emit('editProfile');
@@ -344,7 +418,7 @@ export default {
         this.showLeaderLoading = true;
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
         this.paginationConfig.count = res.data.count;
-        this.copyList.push(...res.data.data);
+        this.copyList.push(...res.data.results);
         if (this.detailsBarInfo.type === 'add') {
           // 新增 profile
           this.rtxList = this.copyList;
@@ -387,122 +461,100 @@ export default {
       }
       // 这里确定之后需要缓存
       this.initialDepartments = this.getSelectedDepartments;
+      this.userSettingData.department_name = this.formatDepartments(this.initialDepartments);
       this.isShowSetDepartments = false;
+      window.changeInput = true;
     },
     handleCancelSet() {
       this.isShowSetDepartments = false;
     },
     handleSubmit() {
-      // 验证是否必填
-      if (!this.submitVerify()) {
-        return;
-      }
-      // 编辑
-      if (this.detailsBarInfo.type === 'edit') {
-        // 点击保存时，只在样式上隐藏侧边栏，打开loading
-        this.$emit('hideBar');
-
-        const data = {
-          leader: this.leaderIdList,
-          departments: this.getSelectedDepartments.map(item => item.id),
-          password_valid_days: this.passwordValidDays,
-        };
-        this.profileInfoList.forEach((info) => {
-          // 不保存内置不可编辑字段
-          if (!(info.editable === false && info.builtin === true)) {
-            data[info.key] = info.value;
-            if (info.key === 'telephone') {
-              data.iso_code = info.iso_code;
-            }
-          }
-        });
-        if (this.AvatarBase64) {
-          data.logo = this.AvatarBase64;
+      let phoneValue = '';
+      this.profileInfoList.map((item) => {
+        if (item.key === 'telephone') {
+          phoneValue = this.$refs.userInfoData.$refs.phone[0].verifyInput(item.value);
         }
-
-        this.$store.dispatch('organization/patchProfile', {
-          id: this.currentProfile.id,
-          data,
-        }).then((res) => {
-          if (res.result) {
-            this.$emit('updateUserInfor');
-          }
-        })
-          .catch((e) => {
-            console.warn(e);
-            this.$emit('showBar');
-          });
-      } else if (this.detailsBarInfo.type === 'add') {
-        // 点击保存时，只在样式上隐藏侧边栏，打开loading
-        this.$emit('hideBar');
-
-        const leader = this.leaderIdList;
-        const params = {
-          category_id: this.currentCategoryId,
-          leader,
-          departments: this.getSelectedDepartments.map(item => item.id),
-          password_valid_days: this.passwordValidDays,
-        };
-        this.profileInfoList.forEach((info) => {
-          if (info.key !== 'last_login_time' && info.key !== 'create_time') {
-            params[info.key] = info.value;
-          }
-          if (info.key === 'telephone') {
-            params.iso_code = info.iso_code;
-          }
-        });
-        if (this.AvatarBase64) {
-          params.logo = this.AvatarBase64;
-        }
-
-        this.$store.dispatch('organization/postProfile', params).then((res) => {
-          if (res.result) {
-            this.$emit('updateUserInfor');
-          }
-        })
-          .catch((e) => {
-            console.warn(e);
-          })
-          .finally(() => {
-            this.$emit('showBar');
-          });
-      }
-    },
-    submitVerify() {
-      let markError = false;
-      this.profileInfoList.forEach((item) => {
-        if (item.isError) {
-          markError = true;
-        }
+      });
+      this.$refs.userInfoData.$refs.validateForm.validate().then(() => {
+        // 编辑
         if (this.detailsBarInfo.type === 'edit') {
-          if (item.editable && item.require && !this.isValidValue(item.value)) {
-            item.isError = true;
-            markError = true;
+          // 点击保存时，只在样式上隐藏侧边栏，打开loading
+
+          const data = {
+            leader: this.userSettingData.leader,
+            departments: this.getSelectedDepartments.map(item => item.id),
+            password_valid_days: this.userSettingData.password_valid_days,
+          };
+          this.profileInfoList.forEach((info) => {
+            // 不保存内置不可编辑字段
+            if (!(info.editable === false && info.builtin === true)) {
+              data[info.key] = info.value;
+              if (info.key === 'telephone') {
+                data.iso_code = info.iso_code;
+              }
+            }
+          });
+          if (this.AvatarBase64) {
+            data.logo = this.AvatarBase64;
           }
+
+          !phoneValue && this.$store.dispatch('organization/patchProfile', {
+            id: this.currentProfile.id,
+            data,
+          }).then((res) => {
+            if (res.result) {
+              this.$emit('updateUserInfor');
+              this.$emit('hideBar');
+            }
+          })
+            .catch((e) => {
+              console.warn(e);
+              this.$emit('showBar');
+            });
         } else if (this.detailsBarInfo.type === 'add') {
-          if (item.require && !this.isValidValue(item.value)) {
-            item.isError = true;
-            markError = true;
+          // 点击保存时，只在样式上隐藏侧边栏，打开loading
+
+          const params = {
+            category_id: this.currentCategoryId,
+            leader: this.userSettingData.leader,
+            departments: this.getSelectedDepartments.map(item => item.id),
+            password_valid_days: this.userSettingData.password_valid_days,
+          };
+          this.profileInfoList.forEach((info) => {
+            if (info.key !== 'last_login_time' && info.key !== 'create_time') {
+              params[info.key] = info.value;
+            }
+            if (info.key === 'telephone') {
+              params.iso_code = info.iso_code;
+            }
+          });
+          if (this.AvatarBase64) {
+            params.logo = this.AvatarBase64;
           }
+
+          !phoneValue && this.$store.dispatch('organization/postProfile', params).then((res) => {
+            if (res.result) {
+              this.$emit('updateUserInfor');
+              this.$emit('hideBar');
+            }
+          })
+            .catch((e) => {
+              console.warn(e);
+            })
+            .finally(() => {
+              this.$emit('showBar');
+            });
         }
       });
-      this.$nextTick(() => {
-        const els = this.$el.getElementsByClassName('input-error');
-        if (els.length) {
-          els[0].scrollIntoView();
-        }
-      });
-      return !markError;
     },
-    isValidValue(value) {
-      if (value === null || value === undefined) {
-        return false;
-      } if (typeof value === 'number') {
-        return Boolean(value) || value === 0;
-      } if (typeof value === 'string') {
-        return value !== '';
-      }
-      return value.length !== 0;
+    isUserInfo() {
+      this.showUserInfo = !this.showUserInfo;
+    },
+    isUserSetting() {
+      this.showUserSetting = !this.showUserSetting;
+    },
+    changSelect() {
+      window.changeInput = true;
     },
   },
 };
@@ -541,36 +593,44 @@ export default {
 }
 
 .user-infor-wrapper {
-  padding: 17px 30px;
+  padding: 24px 24px 75px;
   height: calc(100% - 51px);
-  background: #fafbfd;
   overflow: hidden;
   overflow-y: auto;
 
   @include scroller($backgroundColor: #e6e9ea, $width: 4px);
 
   > .information-box {
-    width: 460px;
+    width: 100%;
   }
 }
 
 .fill-infor-wrapper {
-  width: 460px;
+  width: 100%;
   position: relative;
+  display: block;
+  margin-top: 8px;
+}
+.isHide {
+  display: none;
 }
 
 .infor-title {
-  padding-bottom: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  color: rgba(51, 60, 72, 1);
-  line-height: 19px;
-  border-bottom: 1px solid #dde4eb;
+  font-size: 12px;
+  color: #313238;
+  line-height: 30px;
+  background-color: #F0F1F5;
+  i {
+    margin-left: 5px;
+    color: #979BA5;
+  }
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 .infor-list {
   padding-top: 17px;
-  font-size: 14px;
   color: rgba(99, 101, 110, 1);
 
   &.no-verifica {
@@ -582,10 +642,11 @@ export default {
   &:nth-child(1),
   &:nth-child(2) {
     .input-text {
-      width: 368px;
+      width: 475px;
+      font-size: 12px;
 
       .select-text {
-        width: 368px;
+        width: 475px;
       }
     }
   }
@@ -608,26 +669,6 @@ export default {
     position: relative;
     min-height: 32px;
     background: #fff;
-
-    &.leader-input {
-      .input-loading {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1500;
-        cursor: not-allowed;
-        background: rgba(0, 0, 0, .05);
-
-        img {
-          width: 20px;
-        }
-      }
-    }
 
     .select-text {
       display: block;
@@ -697,24 +738,46 @@ export default {
 }
 
 .mark-width {
-  .infor-list {
+  display: block;
+  margin-top: 8px;
+  .bk-form-item {
     .input-text {
-      width: 460px;
       cursor: pointer;
 
       .select-text {
-        width: 460px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        display: inline-block;
+        padding: 0 30px 0 12px;
+        font-size: 14px;
+        color: #63656e;
+      }
+    }
+    &.leader-input {
+      .input-loading {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1500;
+        cursor: not-allowed;
+        background: rgba(0, 0, 0, .05);
+
+        img {
+          width: 20px;
+        }
       }
     }
   }
 }
 
 .action-btn {
-  position: absolute;
-  left: 0;
+  position: fixed;
   bottom: 0;
   width: 100%;
   padding: 9px 0 9px 30px;
@@ -724,6 +787,12 @@ export default {
   .btn {
     width: 76px !important;
     margin-right: 10px;
+  }
+}
+
+::v-deep .bk-form  {
+  .bk-label-text {
+    font-size: 12px !important;
   }
 }
 </style>

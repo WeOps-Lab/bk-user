@@ -1,23 +1,11 @@
 <!--
-  - Tencent is pleased to support the open source community by making Bk-User 蓝鲸用户管理 available.
-  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
-  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
-  -
-  - License for Bk-User 蓝鲸用户管理:
-  - -------------------------------------------------------------------
-  -
-  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
-  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-  - The above copyright notice and this permission notice shall be included in all copies or substantial
-  - portions of the Software.
-  -
-  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  - TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+  - Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+  - Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at http://opensource.org/licenses/MIT
+  - Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  - an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  - specific language governing permissions and limitations under the License.
   -->
 <template>
   <div class="organization-wrapper" @click="hiddenMenu" v-bkloading="{ isLoading: initLoading }">
@@ -205,6 +193,8 @@
               v-bkloading="{ isLoading: basicLoading, zIndex: 0 }"
               :user-message="userMessage"
               :is-empty-search="isEmptySearch"
+              :is-table-data-error="isTableDataError"
+              :is-table-data-empty="isTableDataEmpty"
               :is-click.sync="isClick"
               :loading="basicLoading"
               :fields-list="fieldsList"
@@ -216,7 +206,9 @@
               @showTableLoading="showTableLoading"
               @closeTableLoading="closeTableLoading"
               @updateTableData="updateTableData"
-              @updateHeardList="updateHeardList" />
+              @updateHeardList="updateHeardList"
+              @handleRefresh="getTableData"
+              @handleClickEmpty="handleClickEmpty" />
             <div class="table-pagination" v-if="noSearchOrSearchDepartment && paginationConfig.count > 0">
               <div class="table-pagination-left">{{$t('共计')}}
                 {{Math.ceil(paginationConfig.count / paginationConfig.limit)}} {{$t('页')}}，
@@ -240,13 +232,14 @@
     <!-- 新增用户 侧边栏 -->
     <bk-sideslider
       class="king-sideslider"
-      :width="520"
+      :width="630"
       :show-mask="false"
       :is-show.sync="detailsBarInfo.isShow"
-      :quick-close="detailsBarInfo.quickClose"
+      :quick-close="true"
       :title="detailsBarInfo.title"
-      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
-      <div slot="content" class="member-content" v-if="detailsBarInfo.isShow">
+      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
+      :before-close="beforeClose">
+      <div slot="content" v-if="detailsBarInfo.isShow">
         <DetailsBar
           :details-bar-info="detailsBarInfo"
           :current-profile="currentProfile"
@@ -381,7 +374,6 @@ export default {
         type: '',
         basicLoading: false,
         title: '',
-        quickClose: true,
       },
       // 点击保存时打开 loading，临时在样式上隐藏侧边栏
       isHideBar: false,
@@ -406,6 +398,8 @@ export default {
       isEmptySearch: false,
       // 表格请求出错
       isTableDataError: false,
+      // 表格请求结果为空
+      isTableDataEmpty: false,
       // 是否勾选了表格数据
       isClick: false,
       isShowSetDepartments: false,
@@ -557,6 +551,7 @@ export default {
           this.filterTreeData(catalog, this.treeDataList);
           catalog.children = catalog.departments;
           catalog.children.forEach((department) => {
+            this.$set(department, 'category_id', catalog.id);
             this.filterTreeData(department, catalog, catalog.type === 'local');
           });
         });
@@ -673,11 +668,12 @@ export default {
         }
 
         this.isEmptyDepartment = false;
+        this.isTableDataEmpty = false;
         this.isEmptySearch = false;
         if (this.handleTabData.totalNumber === 0) {
           this.isEmptyDepartment = true;
         } else if (this.paginationConfig.count === 0) {
-          this.isEmptySearch = true;
+          this.isTableDataEmpty = true;
         }
 
         this.isTableDataError = false;
@@ -700,6 +696,9 @@ export default {
       const userInforList = [];
       const filterTitle = this.userMessage.tableHeardList.map(item => item.key);
       list.forEach((item) => {
+        if (item.leaders) {
+          this.$set(item, 'leader', item.leaders);
+        }
         if (!item.department_name) {
           // 兼容旧代码，因为后端不再返回 display_name
           item.department_name = item.departments.map(department => department.full_name);
@@ -749,6 +748,12 @@ export default {
         }
       });
     },
+    // 清空筛选条件
+    handleClickEmpty() {
+      this.tableSearchKey = [];
+      this.checkSearchKey = '';
+      this.getTableData();
+    },
     // 搜索table
     handleTableSearch(list) {
       if (!list.length) return this.getTableData();
@@ -767,6 +772,7 @@ export default {
       const params = valueList.join('&');
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
         if (res.result) {
+          this.isEmptySearch = res.data.count === 0;
           this.filterUserData(res.data.results);
         }
       })
@@ -922,7 +928,7 @@ export default {
     // 目录重命名
     async confirmRenameCatalog() {
       try {
-        const res = await this.$store.dispatch('catalog/ajaxPutCatalog', {
+        const res = await this.$store.dispatch('catalog/ajaxPatchCatalog', {
           id: this.renameData.item.id,
           data: {
             display_name: this.$refs.dialogContentRef.departmentName,
@@ -980,10 +986,9 @@ export default {
     viewDetails(item) {
       this.currentProfile = item;
       this.detailsBarInfo.type = 'view';
-      this.detailsBarInfo.title = this.currentProfile.display_name;
+      this.detailsBarInfo.title = this.$t('用户详情');
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
-      this.detailsBarInfo.quickClose = true;
     },
     updateTableData(item) {
       this.tableData = item;
@@ -1071,14 +1076,14 @@ export default {
     // 编辑成员信息
     editProfile() {
       this.detailsBarInfo.type = 'edit';
-      this.detailsBarInfo.quickClose = false;
+      this.detailsBarInfo.title = this.$t('编辑用户');
     },
     handleCancelEdit() {
       if (this.detailsBarInfo.type === 'add') {
         this.detailsBarInfo.isShow = false;
       } else {
         this.detailsBarInfo.type = 'view';
-        this.detailsBarInfo.quickClose = true;
+        this.detailsBarInfo.title = this.$t('用户详情');
       }
     },
     // 新增用户 调用接口，拿到数据传给子组件
@@ -1087,7 +1092,6 @@ export default {
       this.detailsBarInfo.title = this.$t('新增用户');
       this.detailsBarInfo.type = 'add';
       this.detailsBarInfo.isShow = true;
-      this.detailsBarInfo.quickClose = false;
       // 设置所在的组织
       const department = this.treeSearchResult ? this.treeSearchResult : this.currentParam.item;
       this.detailsBarInfo.departments = [{
@@ -1276,6 +1280,25 @@ export default {
         .finally(() => {
           this.clickSecond = false;
         });
+    },
+    beforeClose() {
+      if (this.detailsBarInfo.type === 'view') {
+        this.detailsBarInfo.isShow = false;
+      } else {
+        if (window.changeInput) {
+          this.$bkInfo({
+            title: this.$t('确认离开当前页？'),
+            subTitle: this.$t('离开将会导致未保存信息丢失'),
+            okText: this.$t('离开'),
+            confirmFn: () => {
+              this.detailsBarInfo.isShow = false;
+              window.changeInput = false;
+            },
+          });
+        } else {
+          this.detailsBarInfo.isShow = false;
+        }
+      }
     },
     // 点击某个树节点
     handleClickTreeNode(item, isSearchProfile = false) {

@@ -11,9 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 import traceback
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import ProgrammingError
 from django.http import Http404
+from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
@@ -21,7 +23,6 @@ from rest_framework.views import exception_handler
 from sentry_sdk import capture_exception
 
 from .error_codes import CoreAPIError
-from .http import exist_force_raw_header
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # 企业版通用 HTTP 状态码
 EE_GENERAL_STATUS_CODE = 200
-UNKNOWN_ERROR_HINT = "request failed, please check api log of bk-user"
+UNKNOWN_ERROR_HINT = "request failed, please check api log of bk-user! "
 
 
 def custom_exception_handler(exc, context):
@@ -61,7 +62,8 @@ def custom_exception_handler(exc, context):
             # do nothing if get extra details fail
             pass
 
-    if exist_force_raw_header(context["request"]):
+    # NOTE: raw response还有在用, 并且单测基于raw response判断的status_code和异常报错(所以不能去掉)
+    if bool(context["request"].META.get(settings.FORCE_RAW_RESPONSE_HEADER)):
         return get_raw_exception_response(exc, context, detail)
     else:
         return get_ee_exception_response(exc, context, detail)
@@ -81,11 +83,15 @@ def get_ee_exception_response(exc, context, detail):
     elif isinstance(exc, PermissionDenied):
         data["message"] = "403, permission denied"
     elif isinstance(exc, IAMPermissionDenied):
-        data["message"] = exc.extra_info
+        data["message"] = _("您没有权限访问该资源")
+        data["detail"] = exc.extra_info
+        # saas给前端的判定数据结构: {"code": -1, "message": _("您没有权限访问该资源"), "detail": }
+        # data = {"code": "PERMISSION_DENIED", "detail": exc.extra_info}
+        # return Response(data, status=exc.status_code, headers={})
     elif isinstance(exc, ValidationError):
         data["message"] = f"validation error: {exc}"
     elif isinstance(exc, AuthenticationFailed):
-        data["message"] = "403, authentication failed"
+        data["message"] = f"403, authentication failed: {exc}"
     else:
         # log
         logger.exception("unknown exception while handling the request, detail=%s", detail)
@@ -93,6 +99,9 @@ def get_ee_exception_response(exc, context, detail):
         capture_exception(exc)
         # build response
         data["message"] = UNKNOWN_ERROR_HINT
+        # 如果有错误堆栈, 直接把堆栈暴露出来
+        if exc is not None:
+            data["message"] = UNKNOWN_ERROR_HINT + traceback.format_exc()
         data["code"] = -1
 
         # Call REST framework's default exception handler to get the standard error response.
@@ -165,4 +174,4 @@ def get_raw_exception_response(exc, context, detail):
     data = {"result": False, "data": detail, "code": -1, "message": UNKNOWN_ERROR_HINT}
     response = Response(data=data, status=HTTP_500_INTERNAL_SERVER_ERROR)
     setattr(response, "from_exception", True)
-    return response
+    return

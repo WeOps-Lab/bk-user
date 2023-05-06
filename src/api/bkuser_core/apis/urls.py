@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
 from django.conf.urls import include, url
 from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
@@ -36,14 +37,15 @@ schema_view = get_schema_view(
         url(r"^", include("bkuser_core.departments.urls")),
         url(r"^", include("bkuser_core.profiles.urls")),
         url(r"^", include("bkuser_core.categories.urls")),
-        url(r"^", include("bkuser_core.user_settings.urls")),
-        url(r"^", include("bkuser_core.audit.urls")),
+        # url(r"^", include("bkuser_core.user_settings.urls")),
+        # url(r"^", include("bkuser_core.audit.urls")),
     ],
 )
 
-
-urlpatterns = [
-    url(r"^swagger(?P<format>\.json|\.yaml)$", schema_view.without_ui(cache_timeout=0), name="schema-json"),
-    url(r"^swagger/$", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
-    url(r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
-]
+urlpatterns = []
+if settings.DEBUG:
+    urlpatterns += [
+        url(r"^swagger(?P<format>\.json|\.yaml)$", schema_view.without_ui(cache_timeout=0), name="schema-json"),
+        url(r"^swagger/$", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
+        url(r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    ]

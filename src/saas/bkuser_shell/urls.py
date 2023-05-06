@@ -15,17 +15,17 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
 from django.views.i18n import JavaScriptCatalog
 
-from bkuser_shell.organization.views.misc import HeaderFooterViewSet, WebPageViewSet
+from bkuser_shell.proxy.views import WebPageViewSet
 
-#TODO: 提取SaaS前缀至环境变量
+# TODO: 提取SaaS前缀至环境变量
 urlpatterns = [
     url(r"^o/bk_user_manage/", include("bkuser_shell.account.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.organization.urls")),
+    url(r"^o/bk_user_manage/", include("bkuser_shell.proxy.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.password.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.categories.urls")),
     url("o/bk_user_manage/", include("bkuser_shell.sync_tasks.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
+    # url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.audit.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.version_log.urls")),
     url(r"^o/bk_user_manage/", include("bkuser_shell.monitoring.urls")),
@@ -38,7 +38,6 @@ urlpatterns = [
         JavaScriptCatalog.as_view(),
         name="javascript-catalog",
     ),
-    url(r"^o/bk_user_manage/api/footer/$", HeaderFooterViewSet.as_view({"get": "get"})),
 ]
 
 # 当且仅当前端独立部署时托管 STATIC_URL 路由
