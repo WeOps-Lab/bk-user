@@ -48,7 +48,7 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
 
     kwargs = json.dumps({"instance_id": category_id, "operator": operator})
     try:
-        p: PeriodicTask = PeriodicTask.objects.get(name=str(category_id))
+        p: PeriodicTask = PeriodicTask.objects.get(name=f"plugin-sync-data-{category_id}")
         p.interval = schedule
         p.kwargs = kwargs
         p.save(update_fields=["interval", "kwargs"])
