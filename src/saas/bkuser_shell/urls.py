@@ -17,40 +17,26 @@ from django.views.i18n import JavaScriptCatalog
 
 from bkuser_shell.proxy.views import WebPageViewSet
 
-# TODO: 提取SaaS前缀至环境变量
 urlpatterns = [
     url(r"^o/bk_user_manage/", include("bkuser_shell.account.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.proxy.urls")),
-    # url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.password.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.categories.urls")),
-    url("o/bk_user_manage/", include("bkuser_shell.sync_tasks.urls")),
-    # url(r"^o/bk_user_manage/", include("bkuser_shell.config_center.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.audit.urls")),
+    url("^o/bk_user_manage/", include("bkuser_shell.proxy.urls")),
+    # TODO: version should be change to a different impl
     url(r"^o/bk_user_manage/", include("bkuser_shell.version_log.urls")),
-    url(r"^o/bk_user_manage/", include("bkuser_shell.monitoring.urls")),
     url(
-        r"^o/bk_user_manage/favicon.ico$",
+        r"^favicon.ico$",
         RedirectView.as_view(url=staticfiles_storage.url("img/favicon.ico")),
     ),
     url(
-        r"^o/bk_user_manage/jsi18n/(?P<packages>\S+?)/$",
+        r"^jsi18n/(?P<packages>\S+?)/$",
         JavaScriptCatalog.as_view(),
         name="javascript-catalog",
     ),
+    url(r"^", include("django_prometheus.urls")),
 ]
 
 # 当且仅当前端独立部署时托管 STATIC_URL 路由
 if settings.IS_PAGES_INDEPENDENT_DEPLOYMENT:
     urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-urlpatterns += [
-    url(r"^o/bk_user_manage/", include("bkuser_shell.apis.urls")),
-    url(r"^o/bk_user_manage/", include("django_prometheus.urls")),
-]
-
-if "silk" in settings.INSTALLED_APPS:
-    urlpatterns += [url(r"^o/bk_user_manage/silk/", include("silk.urls", namespace="silk"))]
 
 # 其余path交由前端处理
 urlpatterns += [url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index")]
