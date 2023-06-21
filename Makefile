@@ -67,34 +67,31 @@ release-api:
 	rm -Rf $(USERMGR_API_RELEASE_PATH)
 	mkdir -p $(USERMGR_API_RELEASE_PATH)
 
-	cp -Rf ./src/api $(USERMGR_API_RELEASE_PATH)
+	/bin/cp -Rf ./src/api $(USERMGR_API_RELEASE_PATH)
 	rm -Rf $(USERMGR_API_RELEASE_PATH)/bkuser_global
-	cp -Rf ./src/bkuser_global $(USERMGR_API_RELEASE_PATH)/api/bkuser_global
-	cp -Rf ./src/api/support-files $(USERMGR_API_RELEASE_PATH)
-	cp -Rf ./VERSION $(USERMGR_API_RELEASE_PATH)
-	cp -Rf ./src/api/projects.yaml $(USERMGR_API_RELEASE_PATH)
+	/bin/cp -Rf ./src/bkuser_global $(USERMGR_API_RELEASE_PATH)/api/bkuser_global
+	/bin/cp -Rf ./src/build/api/support-files $(USERMGR_API_RELEASE_PATH)
+	/bin/cp -Rf ./VERSION $(USERMGR_API_RELEASE_PATH)
+	/bin/cp -Rf ./src/api/projects.yaml $(USERMGR_API_RELEASE_PATH)
 
 	virtualenv $(VENV_PATH) -p python3
 	$(VENV_PATH)/bin/pip3 download -r ./src/api/requirements.txt -d $(USERMGR_API_RELEASE_PATH)/support-files/pkgs
 	
 	rm -Rf $(VENV_PATH)
-	cp -Rf $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/prod.py $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/dev.py
+	/bin/cp -Rf $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/prod.py $(USERMGR_API_RELEASE_PATH)/api/bkuser_core/config/overlays/dev.py
 
 
 
 release-saas:
-	cd ./src/pages &&  npm install && npm run build
+	cd ./src/pages && npm config set registry https://mirrors.tencent.com/npm/ &&  npm install && npm run build && mv ./src/pages/dist/ ./src/saas/static
+	/bin/cp -Rf ./src/build/saas/bk_user_manage.png ./src/saas/
+	/bin/cp -Rf ./src/build/saas/manage.py ./src/saas/
+	/bin/cp -Rf ./src/build/saas/.env ./src/saas/bkuser_shell/config/common
+	/bin/cp -Rf ./src/build/saas/support-files ./src/saas/
+
 	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)
 	mkdir -p $(USERMGR_SAAS_RELEASE_PATH)
-	cp -Rf ./src/saas $(USERMGR_SAAS_RELEASE_PATH)/src
-	cp -Rf ./src/pages/dist $(USERMGR_SAAS_RELEASE_PATH)/src/static
-	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)/src/bkuser_global
-	cp -Rf ./src/bkuser_global $(USERMGR_SAAS_RELEASE_PATH)/src/
-	rm -Rf $(USERMGR_SAAS_RELEASE_PATH)/src/bkuser_sdk
-	cp -Rf ./src/sdk/bkuser_sdk/ $(USERMGR_SAAS_RELEASE_PATH)/src/
-	cp -Rf ./VERSION $(USERMGR_SAAS_RELEASE_PATH)
-	cp -Rf ./src/saas/app.yml $(USERMGR_SAAS_RELEASE_PATH)
-	cp -Rf ./src/saas/bk_user_manage.png $(USERMGR_SAAS_RELEASE_PATH)
+	/bin/cp -Rf ./src/saas $(USERMGR_SAAS_RELEASE_PATH)/src
 	mkdir -p $(USERMGR_SAAS_RELEASE_PATH)/pkgs
 
 	virtualenv $(VENV_PATH) -p python3

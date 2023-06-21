@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import os
+from . import env
 
 # ==============================================================================
 # 应用基本信息配置 (请按照说明修改)
@@ -18,7 +19,7 @@ APP_ID = os.getenv("APP_CODE")
 APP_TOKEN = os.getenv("APP_TOKEN")
 
 # 蓝鲸智云开发者中心的域名，形如：http://paas.example.com
-BK_PAAS_URL = os.getenv("BK_PAAS_HOST")
+BK_PAAS_URL = os.getenv("BK_PAAS_INNER_HOST")
 
 # 蓝鲸登录跳转页面
 BK_LOGIN_URL = f"{BK_PAAS_URL}/login/"
@@ -26,7 +27,7 @@ BK_LOGIN_URL = f"{BK_PAAS_URL}/login/"
 BK_LOGIN_API_URL = f"{BK_PAAS_URL}/login/"
 
 # ESB Api URL
-BK_COMPONENT_API_URL = os.getenv("BK_PAAS_HOST")
+BK_COMPONENT_API_URL = os.getenv("BK_PAAS_INNER_HOST")
 
 # 请求官方 API 默认版本号，可选值为："v2" 或 ""；其中，"v2"表示规范化API，""表示未规范化API
 DEFAULT_BK_API_VER = "v2"
