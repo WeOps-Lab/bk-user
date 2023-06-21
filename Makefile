@@ -83,7 +83,8 @@ release-api:
 
 
 release-saas:
-	cd ./src/pages && npm config set registry https://mirrors.tencent.com/npm/ &&  npm install && npm run build && mv ./src/pages/dist/ ./src/saas/static
+	pushd ./src/pages && npm config set registry https://mirrors.tencent.com/npm/ &&  npm install && npm run build && popd && mv ./src/pages/dist/ ./src/saas/static
+	/bin/cp -Rf ./src/bkuser_global ./src/saas/
 	/bin/cp -Rf ./src/build/saas/bk_user_manage.png ./src/saas/
 	/bin/cp -Rf ./src/build/saas/manage.py ./src/saas/
 	/bin/cp -Rf ./src/build/saas/.env ./src/saas/bkuser_shell/config/common
@@ -93,7 +94,8 @@ release-saas:
 	mkdir -p $(USERMGR_SAAS_RELEASE_PATH)
 	/bin/cp -Rf ./src/saas $(USERMGR_SAAS_RELEASE_PATH)/src
 	mkdir -p $(USERMGR_SAAS_RELEASE_PATH)/pkgs
+	mv $(USERMGR_SAAS_RELEASE_PATH)/src/app.yml $(USERMGR_SAAS_RELEASE_PATH)/
 
 	virtualenv $(VENV_PATH) -p python3
-	$(VENV_PATH)/bin/pip3 download -r $(USERMGR_SAAS_RELEASE_PATH)/src/requirements.txt -d $(USERMGR_SAAS_RELEASE_PATH)/pkgs 
+	$(VENV_PATH)/bin/pip3 download -r $(USERMGR_SAAS_RELEASE_PATH)/src/requirements.txt -d $(USERMGR_SAAS_RELEASE_PATH)/pkgs
 	rm -Rf $(VENV_PATH)
