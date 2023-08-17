@@ -93,7 +93,7 @@ export default {
     };
   },
   mounted() {
-    this.initRsa();
+    // this.initRsa();
   },
   methods: {
     async initRsa() {

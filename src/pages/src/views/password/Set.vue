@@ -95,7 +95,7 @@ export default {
     };
   },
   mounted() {
-    this.initRsa();
+    // this.initRsa();
     // this.initToken()
   },
   methods: {

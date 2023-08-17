@@ -22,7 +22,7 @@ APP_TOKEN = os.getenv("APP_TOKEN")
 BK_PAAS_URL = os.getenv("BK_PAAS_INNER_HOST")
 
 # 蓝鲸登录跳转页面
-BK_LOGIN_URL = f"{BK_PAAS_URL}/login/"
+BK_LOGIN_URL = f"{os.getenv('BK_PAAS_HOST')}/login/"
 # 蓝鲸登录 API URL
 BK_LOGIN_API_URL = f"{BK_PAAS_URL}/login/"
 
