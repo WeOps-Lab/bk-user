@@ -132,7 +132,7 @@ class ExcelSyncer(Syncer):
 
         with transaction.atomic():
             self._sync_users(self.fetcher.parser_set, user_rows, is_overwrite)
-            self._sync_leaders(self.fetcher.parser_set, user_rows)
+            self._sync_leaders(self.fetcher.parser_set, user_rows, is_overwrite)
 
         self._notify_init_passwords()
 
@@ -335,7 +335,7 @@ class ExcelSyncer(Syncer):
             )
             raise Exception(message)
 
-    def _sync_leaders(self, parser_set: "ParserSet", users: list):
+    def _sync_leaders(self, parser_set: "ParserSet", users: list, is_overwrite: bool = False):
         # 由于 leader 需要等待 profiles 全部插入后才能引用
         for user_raw_info in users:
             if self._judge_data_all_none(user_raw_info):
@@ -360,6 +360,9 @@ class ExcelSyncer(Syncer):
                 logger.error("profile %s does not exist. [category_id=%s]", username, self.category_id)
                 continue
 
+            # 同步前清除用户的所有领导,以excel为准
+            if is_overwrite:
+                LeaderThroughModel.objects.filter(from_profile_id=from_profile.id).delete()
             for leader in leaders:
                 params = {"from_profile_id": from_profile.id, "to_profile_id": leader.pk}
                 try:
