@@ -171,7 +171,8 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                         message_detail,
                     )
                     # NOTE: 安全原因, 不能返回账户状态
-                    raise error_codes.PASSWORD_ERROR
+                    # raise error_codes.PASSWORD_ERROR
+                    raise error_codes.TOO_MANY_TRY
 
         try:
             login_class = get_plugin_by_category(category).login_handler_cls
