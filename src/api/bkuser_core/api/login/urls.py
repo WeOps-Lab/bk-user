@@ -30,4 +30,9 @@ urlpatterns = [
         views.ProfileLoginViewSet.as_view({"post": "batch_query"}),
         name="login.batch_query",
     ),
+    path(
+        "profile/unlock/",
+        views.ProfileLoginViewSet.as_view({"post": "unlock"}),
+        name="login.unlock",
+    ),
 ]

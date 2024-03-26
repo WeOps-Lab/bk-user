@@ -21,7 +21,7 @@ from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from bkuser_core.api.login.serializers import (
@@ -29,10 +29,10 @@ from bkuser_core.api.login.serializers import (
     LoginBatchResponseSerializer,
     LoginUpsertSerializer,
     ProfileLoginSerializer,
-    ProfileSerializer,
+    ProfileSerializer, ProfileUnLockSerializer,
 )
-from bkuser_core.audit.constants import LogInFailReason
-from bkuser_core.audit.utils import create_profile_log
+from bkuser_core.audit.constants import LogInFailReason, OperationType
+from bkuser_core.audit.utils import create_profile_log, create_general_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -206,15 +206,15 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         return Response(data=ProfileSerializer(profile, context={"request": request}).data)
 
     def _check_password_status(
-        self, request, profile: Profile, config_loader: ConfigProvider, time_aware_now: datetime.datetime
+            self, request, profile: Profile, config_loader: ConfigProvider, time_aware_now: datetime.datetime
     ):
         """当密码校验成功后，检查用户密码状态"""
         # 密码状态校验:初始密码未修改
         # 暂时跳过判断 admin，考虑在 login 模块未升级替换时，admin 可以在 SaaS 配置中关掉该特性
         if (
-            not profile.is_superuser
-            and config_loader.get("force_reset_first_login")
-            and profile.password_update_time is None
+                not profile.is_superuser
+                and config_loader.get("force_reset_first_login")
+                and profile.password_update_time is None
         ):
             create_profile_log(
                 profile=profile,
@@ -230,8 +230,9 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         # 密码状态校验:密码过期
         valid_period = datetime.timedelta(days=profile.password_valid_days)
         if (
-            profile.password_valid_days > 0
-            and ((profile.password_update_time or profile.latest_password_update_time) + valid_period) < time_aware_now
+                profile.password_valid_days > 0
+                and (
+                (profile.password_update_time or profile.latest_password_update_time) + valid_period) < time_aware_now
         ):
             create_profile_log(
                 profile=profile,
@@ -364,3 +365,51 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
         # 由于当前只继承了 viewSet，需要需要额外添加 context
         return Response(data=LoginBatchResponseSerializer(profiles, many=True, context={"request": request}).data)
+
+    def unlock(self, request):
+        serializer = ProfileUnLockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data.get("username")
+        domain = serializer.validated_data.get("domain", None)
+
+        logger.debug("do unlock check, username<%s>, domain=<%s>", username, domain)
+        # 无指定 domain 时, 选择默认域
+        if not domain:
+            category = ProfileCategory.objects.get_default()
+        else:
+            try:
+                category = ProfileCategory.objects.get(domain=domain)
+            except ProfileCategory.DoesNotExist:
+                raise error_codes.DOMAIN_UNKNOWN
+
+            if category.inactive:
+                raise error_codes.CATEGORY_NOT_ENABLED
+
+        logger.debug(
+            "do unlock check, will check in category<%s-%s-%s>", category.type, category.display_name, category.id
+        )
+
+        message_detail = (
+            f"username={username}, domain={domain} in category<{category.type}-{category.display_name}-{category.id}>"
+        )
+
+        # 这里不检查具体的用户名格式，只判断是否能够获取到对应用户
+        try:
+            profile = Profile.objects.get(
+                username=username,
+                domain=category.domain,
+            )
+        except Profile.DoesNotExist:
+            logger.info("unlock check, can't find the %s", message_detail)
+            raise error_codes.USER_DOES_NOT_EXIST
+        except MultipleObjectsReturned:
+            logger.info("unlock check, find multiple profiles via %s", message_detail)
+            raise error_codes.USER_EXIST_MANY
+        config_loader = ConfigProvider(category_id=category.id)
+        auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
+        farthest_count_time = now() - datetime.timedelta(seconds=auto_unlock_seconds)
+        profile.login_set.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value,
+                                 create_time__lte=farthest_count_time).delete()
+        logger.info("unlock success %s", message_detail)
+        return Response(status=status.HTTP_200_OK)

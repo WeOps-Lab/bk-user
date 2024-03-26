@@ -22,6 +22,10 @@ class ProfileLoginSerializer(serializers.Serializer):
     password = serializers.CharField(help_text="用户密码")
     domain = serializers.CharField(required=False, help_text="用户所属目录 domain，当登录用户不属于默认目录时必填")
 
+class ProfileUnLockSerializer(serializers.Serializer):
+    username = serializers.CharField(help_text="用户名")
+    domain = serializers.CharField(required=False, help_text="用户所属目录 domain，当登录用户不属于默认目录时必填")
+
 
 class LoginUpsertSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, min_length=1, max_length=255)
