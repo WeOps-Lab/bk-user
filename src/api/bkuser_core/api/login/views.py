@@ -31,8 +31,8 @@ from bkuser_core.api.login.serializers import (
     ProfileLoginSerializer,
     ProfileSerializer, ProfileUnLockSerializer,
 )
-from bkuser_core.audit.constants import LogInFailReason, OperationType
-from bkuser_core.audit.utils import create_profile_log, create_general_log
+from bkuser_core.audit.constants import LogInFailReason
+from bkuser_core.audit.utils import create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -410,6 +410,57 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
         farthest_count_time = now() - datetime.timedelta(seconds=auto_unlock_seconds)
         profile.login_set.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value,
-                                 create_time__lte=farthest_count_time).delete()
+                                 create_time__gte=farthest_count_time).delete()
         logger.info("unlock success %s", message_detail)
         return Response(status=status.HTTP_200_OK)
+
+    def islock(self, request):
+        serializer = ProfileUnLockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data.get("username")
+        domain = serializer.validated_data.get("domain", None)
+
+        logger.debug("do islock check, username<%s>, domain=<%s>", username, domain)
+        # 无指定 domain 时, 选择默认域
+        if not domain:
+            category = ProfileCategory.objects.get_default()
+        else:
+            try:
+                category = ProfileCategory.objects.get(domain=domain)
+            except ProfileCategory.DoesNotExist:
+                raise error_codes.DOMAIN_UNKNOWN
+
+            if category.inactive:
+                raise error_codes.CATEGORY_NOT_ENABLED
+
+        logger.debug(
+            "do islock check, will check in category<%s-%s-%s>", category.type, category.display_name, category.id
+        )
+
+        message_detail = (
+            f"username={username}, domain={domain} in category<{category.type}-{category.display_name}-{category.id}>"
+        )
+
+        # 这里不检查具体的用户名格式，只判断是否能够获取到对应用户
+        try:
+            profile = Profile.objects.get(
+                username=username,
+                domain=category.domain,
+            )
+        except Profile.DoesNotExist:
+            logger.info("islock check, can't find the %s", message_detail)
+            raise error_codes.USER_DOES_NOT_EXIST
+        except MultipleObjectsReturned:
+            logger.info("islock check, find multiple profiles via %s", message_detail)
+            raise error_codes.USER_EXIST_MANY
+        config_loader = ConfigProvider(category_id=category.id)
+        auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
+        max_trail_times = int(config_loader["max_trail_times"])
+        time_aware_now = now()
+        if profile.bad_check_cnt >= max_trail_times > 0:
+            from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
+            retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
+            if retry_after_wait > 0:
+                return Response({"status":"locked"})
+        return Response({"status":"unlock"})

@@ -35,4 +35,9 @@ urlpatterns = [
         views.ProfileLoginViewSet.as_view({"post": "unlock"}),
         name="login.unlock",
     ),
+    path(
+        "profile/islock/",
+        views.ProfileLoginViewSet.as_view({"post": "islock"}),
+        name="login.islock",
+    ),
 ]
