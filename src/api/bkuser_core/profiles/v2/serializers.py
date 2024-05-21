@@ -16,11 +16,12 @@ from rest_framework import serializers
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerializer, CustomFieldsMixin, CustomFieldsModelSerializer
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
-from bkuser_core.profiles.models import DynamicFieldInfo, Profile
+from bkuser_core.profiles.models import DynamicFieldInfo, Profile, ProfileImInfo
 from bkuser_core.profiles.utils import get_username, parse_username_domain, remove_sensitive_fields_for_profile
 from bkuser_core.profiles.validators import validate_domain, validate_username
 
 logger = logging.getLogger(__name__)
+
 
 # ===============================================================================
 # Response
@@ -236,3 +237,47 @@ class UpdateProfileSerializer(CustomFieldsModelSerializer):
     class Meta:
         model = Profile
         exclude = ["category_id", "username", "domain"]
+
+
+class ProfileImReqSerializer(CustomFieldsModelSerializer):
+    domain = serializers.CharField(validators=[validate_domain], required=False)
+    usernames = serializers.CharField(required=False)
+    im_user_ids = serializers.CharField(required=False)
+    im_code = serializers.CharField(required=True)
+
+    class Meta:
+        model = ProfileImInfo
+        fields = ("usernames", "domain", "im_code", "im_user_ids")
+        validators: list = []
+
+
+class ProfileImBulkReqSerializer(CustomFieldsModelSerializer):
+    domain = serializers.CharField(validators=[validate_domain], required=False)
+    username = serializers.CharField(validators=[validate_username])
+    im_code = serializers.CharField()
+    im_user_id = serializers.CharField()
+
+    class Meta:
+        model = ProfileImInfo
+        fields = ("domain", "username", "im_code", "im_user_id")
+        validators: list = []
+
+
+class ProfileImDeleteReqSerializer(CustomFieldsModelSerializer):
+    im_code = serializers.CharField()
+
+    class Meta:
+        model = ProfileImInfo
+        fields = ("im_code",)
+        validators: list = []
+
+
+class ProfileImSerializer(CustomFieldsModelSerializer):
+    im_code = serializers.CharField(required=False)
+    username = serializers.CharField(source="profile.username", required=False)
+    domain = serializers.CharField(source="profile.domain", required=False)
+    im_user_id = serializers.CharField(required=False)
+
+    class Meta:
+        model = ProfileImInfo
+        exclude = ("update_time", "create_time")

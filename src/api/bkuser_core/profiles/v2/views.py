@@ -35,7 +35,7 @@ from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.v2 import serializers as department_serializer
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
-from bkuser_core.profiles.models import LeaderThroughModel, Profile
+from bkuser_core.profiles.models import LeaderThroughModel, Profile, ProfileImInfo
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 from bkuser_core.profiles.utils import (
@@ -425,3 +425,76 @@ class LeaderEdgeViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     queryset = LeaderThroughModel.objects.filter(to_profile__enabled=True, from_profile__enabled=True)
     serializer_class = local_serializers.LeaderEdgeSerializer
     ordering = ["id"]
+
+
+class ProfileImViewSet(AdvancedModelViewSet, AdvancedListAPIView):
+    model = ProfileImInfo
+    serializer_class = local_serializers.ProfileImSerializer
+    queryset = model.objects.all()
+
+    @swagger_auto_schema(
+        query_serializer=local_serializers.ProfileImReqSerializer(),
+        responses={200: local_serializers.ProfileImSerializer(many=True)},
+    )
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        im_code = self.request.query_params.get("im_code")
+        usernames = request.query_params.get("usernames")
+        usernames = usernames.split(",") if usernames else []
+        im_user_ids = request.query_params.get("im_user_ids")
+        im_user_ids = im_user_ids.split(",") if im_user_ids else []
+        domain = self.request.query_params.get("domain")
+        queryset = queryset.filter(im_code=im_code)
+        if not domain:
+            domain = get_default_category_domain_from_local_cache()
+        if usernames:
+            queryset = queryset.filter(profile__username__in=usernames, profile__domain=domain)
+        if im_user_ids:
+            queryset = queryset.filter(im_user_id__in=im_user_ids)
+        queryset = queryset.filter(im_code=im_code)
+        return Response(self.serializer_class(queryset, many=True).data)
+
+    @swagger_auto_schema(
+        request_body=local_serializers.ProfileImBulkReqSerializer(many=True),
+    )
+    def bulk_create_or_update(self, request, *args, **kwargs):
+        """批量创建IM信息 """
+        im_info = request.data
+        non_exist_profiles = []
+        exist_im_profiles = []
+        non_exist_im_profiles = []
+        for info in im_info:
+            username = info.get("username")
+            domain = info.get("domain")
+            im_code = info.get("im_code")
+            im_user_id = info.get("im_user_id")
+            if not domain:
+                domain = get_default_category_domain_from_local_cache()
+            profile = Profile.objects.filter(username=username, domain=domain).first()
+            if not profile:
+                non_exist_profiles.append(username)
+                continue
+            exist_im_profile = self.model.objects.filter(profile=profile, im_code=im_code).first()
+            if exist_im_profile:
+                exist_im_profile.im_user_id = im_user_id
+                exist_im_profiles.append(exist_im_profile)
+            else:
+                non_exist_im_profiles.append(
+                    self.model(profile=profile, im_code=im_code, im_user_id=im_user_id))
+
+        non_exist_objs = self.model.objects.bulk_create(non_exist_im_profiles, batch_size=200)
+        exist_objs = self.model.objects.bulk_update(exist_im_profiles, ["im_user_id"], batch_size=200)
+        if non_exist_profiles:
+            logger.warning(f"Profiles not found: {non_exist_profiles}")
+        logger.info(f"Create IM profiles: {len(non_exist_objs or [])}, Update IM profiles: {len(exist_objs or [])}")
+        return Response()
+
+    @swagger_auto_schema(
+        request_body=local_serializers.ProfileImDeleteReqSerializer(),
+    )
+    def bulk_delete(self, request, *args, **kwargs):
+        """批量删除IM信息,当im_user_id都变化时，可以使用这个接口
+        {"im_code": "weixin"}
+        """
+        self.get_queryset().filter(im_code=request.data.get("im_code")).delete()
+        return Response()

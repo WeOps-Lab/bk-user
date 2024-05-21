@@ -74,4 +74,31 @@ urlpatterns = [
         views.LeaderEdgeViewSet.as_view({"get": "list"}),
         name="edge.leader",
     ),
+    url(
+        r"^api/v2/profile_im/$",
+        views.ProfileImViewSet.as_view(
+            {
+                "get": "list",
+            }
+        ),
+        name="profile_im.base",
+    ),
+    url(
+        r"^api/v2/profile_im/bulk_create_or_update/$",
+        views.ProfileImViewSet.as_view(
+            {
+                "post": "bulk_create_or_update",
+            }
+        ),
+        name="profile_im.bulk_create_or_update",
+    ),
+    url(
+        r"^api/v2/profile_im/bulk_delete/$",
+        views.ProfileImViewSet.as_view(
+            {
+                "post": "bulk_delete",
+            }
+        ),
+        name="profile_im.bulk_delete",
+    ),
 ]

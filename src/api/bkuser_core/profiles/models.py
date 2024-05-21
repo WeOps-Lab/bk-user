@@ -321,3 +321,19 @@ class ExpirationNoticeRecord(TimestampedModel):
         ordering = ["id"]
         verbose_name = "过期通知记录"
         verbose_name_plural = "过期通知记录"
+
+
+class ProfileImInfo(TimestampedModel):
+    """用户 Im信息"""
+
+    profile = models.ForeignKey("Profile", verbose_name="用户", related_name="im_data", on_delete=models.CASCADE)
+    im_code = models.CharField(
+        verbose_name=_("IM类型"),
+        max_length=64,
+    )
+    im_user_id = models.CharField("Im用户ID", max_length=128, default="", null=False, blank=False)
+
+    class Meta:
+        verbose_name = "用户IM信息表"
+        verbose_name_plural = "用户IM信息表"
+        unique_together = ("profile", "im_code")
