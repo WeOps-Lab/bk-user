@@ -455,11 +455,11 @@ class ProfileImViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         return Response(self.serializer_class(queryset, many=True).data)
 
     @swagger_auto_schema(
-        request_body=local_serializers.ProfileImBulkReqSerializer(many=True),
+        request_body=local_serializers.ProfileImBulkReqSerializer(),
     )
     def bulk_create_or_update(self, request, *args, **kwargs):
         """批量创建IM信息 """
-        im_info = request.data
+        im_info = request.data.get("items", [])
         non_exist_profiles = []
         exist_im_profiles = []
         non_exist_im_profiles = []
@@ -482,11 +482,12 @@ class ProfileImViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 non_exist_im_profiles.append(
                     self.model(profile=profile, im_code=im_code, im_user_id=im_user_id))
 
-        non_exist_objs = self.model.objects.bulk_create(non_exist_im_profiles, batch_size=200)
-        exist_objs = self.model.objects.bulk_update(exist_im_profiles, ["im_user_id"], batch_size=200)
+        self.model.objects.bulk_create(non_exist_im_profiles, batch_size=200)
+        self.model.objects.bulk_update(exist_im_profiles, ["im_user_id"], batch_size=200)
         if non_exist_profiles:
             logger.warning(f"Profiles not found: {non_exist_profiles}")
-        logger.info(f"Create IM profiles: {len(non_exist_objs or [])}, Update IM profiles: {len(exist_objs or [])}")
+        logger.info(
+            f"IM info:{im_info}; Create IM profiles: {len(non_exist_im_profiles or [])}, Update IM profiles: {len(exist_im_profiles or [])}")
         return Response()
 
     @swagger_auto_schema(
@@ -496,5 +497,7 @@ class ProfileImViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """批量删除IM信息,当im_user_id都变化时，可以使用这个接口
         {"im_code": "weixin"}
         """
-        self.get_queryset().filter(im_code=request.data.get("im_code")).delete()
+        im_code = request.data.get("im_code")
+        _, count = self.get_queryset().filter(im_code=im_code).delete()
+        logger.info(f"Delete IM profiles im_code:{im_code};count:{count}")
         return Response()

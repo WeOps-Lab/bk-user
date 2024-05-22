@@ -251,7 +251,7 @@ class ProfileImReqSerializer(CustomFieldsModelSerializer):
         validators: list = []
 
 
-class ProfileImBulkReqSerializer(CustomFieldsModelSerializer):
+class ProfileImItemSerializer(CustomFieldsModelSerializer):
     domain = serializers.CharField(validators=[validate_domain], required=False)
     username = serializers.CharField(validators=[validate_username])
     im_code = serializers.CharField()
@@ -260,6 +260,14 @@ class ProfileImBulkReqSerializer(CustomFieldsModelSerializer):
     class Meta:
         model = ProfileImInfo
         fields = ("domain", "username", "im_code", "im_user_id")
+        validators: list = []
+
+
+class ProfileImBulkReqSerializer(CustomFieldsModelSerializer):
+    items = ProfileImItemSerializer(many=True)
+    class Meta:
+        model = ProfileImInfo
+        fields = ("items",)
         validators: list = []
 
 
