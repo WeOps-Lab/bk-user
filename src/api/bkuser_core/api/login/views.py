@@ -407,11 +407,15 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         except MultipleObjectsReturned:
             logger.info("unlock check, find multiple profiles via %s", message_detail)
             raise error_codes.USER_EXIST_MANY
-        config_loader = ConfigProvider(category_id=category.id)
-        auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
-        farthest_count_time = now() - datetime.timedelta(seconds=auto_unlock_seconds)
-        profile.login_set.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value,
-                                 create_time__gte=farthest_count_time).delete()
+        try:
+            config_loader = ConfigProvider(category_id=category.id)
+            auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
+            farthest_count_time = now() - datetime.timedelta(seconds=auto_unlock_seconds)
+            profile.login_set.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value,
+                                     create_time__gte=farthest_count_time).delete()
+        except Exception as e:
+            logger.exception("unlock check, check profile<%s> of %s failed:%s", profile.username, repr(e))
+            return Response(status=status.HTTP_200_OK)
         logger.info("unlock success %s", message_detail)
         return Response(status=status.HTTP_200_OK)
 
@@ -456,13 +460,17 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         except MultipleObjectsReturned:
             logger.info("islock check, find multiple profiles via %s", message_detail)
             raise error_codes.USER_EXIST_MANY
-        config_loader = ConfigProvider(category_id=category.id)
-        auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
-        max_trail_times = int(config_loader["max_trail_times"])
-        time_aware_now = now()
-        if profile.bad_check_cnt >= max_trail_times > 0:
-            from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
-            retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
-            if retry_after_wait > 0:
-                return Response({"status": "locked"})
+        try:
+            config_loader = ConfigProvider(category_id=category.id)
+            auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
+            max_trail_times = int(config_loader["max_trail_times"])
+            time_aware_now = now()
+            if profile.bad_check_cnt >= max_trail_times > 0:
+                from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
+                retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
+                if retry_after_wait > 0:
+                    return Response({"status": "locked"})
+        except Exception as e:
+            logger.exception("islock check, check profile<%s> of %s failed:%s", profile.username, repr(e))
+            return Response({"status": "unlock"})
         return Response({"status": "unlock"})
