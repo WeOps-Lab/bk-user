@@ -372,10 +372,11 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
         username = serializer.validated_data.get("username")
         domain = serializer.validated_data.get("domain", None)
-
+        username, domain = parse_username_domain(username, domain)
         logger.debug("do unlock check, username<%s>, domain=<%s>", username, domain)
-        # 无指定 domain 时, 选择默认域
+
         if not domain:
+            # default domain
             category = ProfileCategory.objects.get_default()
         else:
             try:
@@ -420,10 +421,11 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
         username = serializer.validated_data.get("username")
         domain = serializer.validated_data.get("domain", None)
-
+        username, domain = parse_username_domain(username, domain)
         logger.debug("do islock check, username<%s>, domain=<%s>", username, domain)
-        # 无指定 domain 时, 选择默认域
+
         if not domain:
+            # default domain
             category = ProfileCategory.objects.get_default()
         else:
             try:
@@ -462,5 +464,5 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             from_last_check_seconds = (time_aware_now - profile.latest_check_time).total_seconds()
             retry_after_wait = int(auto_unlock_seconds - from_last_check_seconds)
             if retry_after_wait > 0:
-                return Response({"status":"locked"})
-        return Response({"status":"unlock"})
+                return Response({"status": "locked"})
+        return Response({"status": "unlock"})
