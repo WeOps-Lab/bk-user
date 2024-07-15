@@ -44,4 +44,9 @@ urlpatterns = [
         views.ProfileBatchApi.as_view(),
         name="profile.batch",
     ),
+    path(
+        "validate/",
+        views.ProfileValidateApi.as_view(),
+        name="profile.validate",
+    )
 ]

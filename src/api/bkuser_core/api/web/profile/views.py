@@ -27,7 +27,7 @@ from .serializers import (
     ProfileCreateInputSLZ,
     ProfileSearchInputSLZ,
     ProfileSearchOutputSLZ,
-    ProfileUpdateInputSLZ,
+    ProfileUpdateInputSLZ, ProfileValidatePasswordInputSLZ,
 )
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
@@ -449,3 +449,26 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
                 updating_instances.append(instance)
 
         return Response(status=status.HTTP_200_OK)
+
+
+class ProfileValidateApi(generics.GenericAPIView):
+    """验证用户密码是否正确"""
+
+    def post(self, request):
+        slz = ProfileValidatePasswordInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        validated_data = slz.validated_data
+
+        username = validated_data["raw_username"]
+        password = validated_data["password"]
+        category_id = validated_data["category_id"]
+
+        try:
+            profile = Profile.objects.get(username=username, category_id=category_id)
+        except Profile.DoesNotExist:
+            raise error_codes.PASSWORD_ERROR
+
+        if not profile.check_password(password):
+            raise error_codes.PASSWORD_ERROR
+
+        return Response()

@@ -21,7 +21,9 @@ from bkuser_core.api.web.utils import (
     get_extras_with_default_values,
     get_raw_password,
 )
+from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.utils import parse_username_domain
 from bkuser_core.profiles.validators import validate_username
 
 
@@ -208,9 +210,33 @@ class ProfileBatchUpdateInputSLZ(serializers.ModelSerializer):
     # 批量更新时使用
     id = serializers.IntegerField(required=False)
     departments = serializers.ListField(required=False)
+
     # extras = serializers.JSONField(required=False)
 
     class Meta:
         model = Profile
         # NOTE: 差异点, 禁止更新password
         exclude = ["category_id", "username", "domain", "password"]
+
+
+class ProfileValidatePasswordInputSLZ(serializers.Serializer):
+    password = serializers.CharField(required=True)
+    username = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        password = attrs.get("password", "")
+        username = attrs.get("username", "")
+        # 根据username获取category_id
+        raw_username, domain = parse_username_domain(username)
+        if not domain:
+            # default domain
+            category_id = ProfileCategory.objects.get_default().id
+        else:
+            try:
+                category_id = ProfileCategory.objects.get(domain=domain).id
+            except ProfileCategory.DoesNotExist:
+                raise serializers.ValidationError("账号或者密码错误")
+        get_raw_password(category_id, password)
+        attrs["category_id"] = category_id
+        attrs["raw_username"] = raw_username
+        return attrs
