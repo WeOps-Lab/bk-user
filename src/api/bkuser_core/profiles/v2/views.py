@@ -440,10 +440,14 @@ class ProfileImViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         queryset = self.get_queryset()
         im_code = self.request.query_params.get("im_code")
         usernames = request.query_params.get("usernames")
-        usernames = usernames.split(",") if usernames else []
+        raw_usernames = usernames.split(",") if usernames else []
         im_user_ids = request.query_params.get("im_user_ids")
         im_user_ids = im_user_ids.split(",") if im_user_ids else []
         domain = self.request.query_params.get("domain")
+        usernames = [parse_username_domain(i, domain)[0] for i in raw_usernames]
+        if not usernames:
+            return Response([])
+        domain = domain or parse_username_domain(raw_usernames[0], domain)[1]
         queryset = queryset.filter(im_code=im_code)
         if not domain:
             domain = get_default_category_domain_from_local_cache()
@@ -466,6 +470,7 @@ class ProfileImViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         for info in im_info:
             username = info.get("username")
             domain = info.get("domain")
+            username, domain = parse_username_domain(username, domain)
             im_code = info.get("im_code")
             im_user_id = info.get("im_user_id")
             if not domain:
