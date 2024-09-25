@@ -5,7 +5,7 @@ author: 蓝鲸智云
 category: 开发工具
 introduction: 【用户管理】是蓝鲸推出的用户及组织架构管理平台，通过该平台可以方便地管理蓝鲸用户、组织架构，未来将提供与企业组织架构对接的能力
 introduction_en: User Management is an organization-management solution provided by Tencent BlueKing, which provides data source for unified login of enterprises.
-version: 2.5.3
+version: 2.5.3-weops
 language: python
 is_use_celery: false
 is_use_celery_with_gevent: false
