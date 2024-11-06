@@ -14,6 +14,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, status
@@ -27,7 +28,8 @@ from .serializers import (
     ProfileCreateInputSLZ,
     ProfileSearchInputSLZ,
     ProfileSearchOutputSLZ,
-    ProfileUpdateInputSLZ, ProfileValidatePasswordInputSLZ,
+    ProfileUpdateInputSLZ, ProfileValidatePasswordInputSLZ, ProfileBatchRestorationInputSLZ,
+    ProfileDeletedSearchInputSLZ,
 )
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
@@ -132,8 +134,8 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
         extras = {key: value for key, value in extra_fields.items()}
 
-        # 只允许本地目录修改
-        if not ProfileCategory.objects.check_writable(instance.category_id):
+        # 只允许本地目录修改 or WeOps可修改上下级关系
+        if not ProfileCategory.objects.check_writable(instance.category_id) and set(request.data.keys()) != {"leader"}:
             raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
         # FIXME: 可以简化, 不要搞那么复杂
@@ -472,3 +474,65 @@ class ProfileValidateApi(generics.GenericAPIView):
             raise error_codes.PASSWORD_ERROR
 
         return Response()
+
+
+class ProfileBatchRestorationApi(generics.CreateAPIView):
+    queryset = Profile.objects.all()
+    lookup_url_kwarg = "id"
+
+    def put(self, request, *args, **kwargs):
+        """批量软删除恢复"""
+        slz = ProfileBatchRestorationInputSLZ(data=request.data, many=True)
+        slz.is_valid(raise_exception=True)
+
+        operator = get_operator(request)
+        data = slz.validated_data
+        restoration_ids = []
+        for obj in data:
+            try:
+                instance = Profile.objects.get(pk=obj["id"])
+
+            except ObjectDoesNotExist:
+                logger.warning(
+                    "obj <%s-%s> not found or already been deleted.",
+                    self.queryset.model,
+                    obj,
+                )
+                continue
+            try:
+                instance.enable()
+                create_general_log(
+                    operator=operator,
+                    operate_type=OperationType.RESTORATION.value,
+                    operator_obj=instance,
+                    request=request,
+                )
+                restoration_ids.append(instance.id)
+            except Exception:
+                logger.exception("failed to restoration instance: %s", instance)
+                raise error_codes.RESOURCE_RESTORATION_FAILED
+        un_restoration_ids = set([obj["id"] for obj in request.data]).difference(set(restoration_ids))
+        logger.info(
+            f"批量软删除恢复成功,已恢复的id为{restoration_ids},未恢复的id为{list(un_restoration_ids)},操作人为{operator}")
+        data = ProfileSearchOutputSLZ(Profile.objects.filter(id__in=restoration_ids), many=True).data
+        return Response(status=status.HTTP_200_OK, data=data)
+
+
+class ProfileQueryDeletedApi(generics.ListAPIView):
+    serializer_class = ProfileSearchOutputSLZ
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        slz = ProfileDeletedSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        queryset = Profile.objects.filter(enabled=False)
+        query = data.get("search")
+        if query:
+            queryset = queryset.filter(
+                Q(username__icontains=query) |
+                Q(display_name__icontains=query) |
+                Q(email__icontains=query) |
+                Q(telephone__icontains=query)
+            )
+        return queryset

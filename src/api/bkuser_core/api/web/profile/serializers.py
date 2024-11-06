@@ -69,6 +69,7 @@ class ProfileSearchInputSLZ(serializers.Serializer):
     # qq
 
 
+
 class ProfileSearchResultLeaderSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, read_only=True)
     username = serializers.CharField()
@@ -205,6 +206,9 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
 class ProfileBatchDeleteInputSLZ(serializers.Serializer):
     id = serializers.IntegerField()
 
+class ProfileBatchRestorationInputSLZ(serializers.Serializer):
+    id = serializers.IntegerField()
+
 
 class ProfileBatchUpdateInputSLZ(serializers.ModelSerializer):
     # 批量更新时使用
@@ -240,3 +244,7 @@ class ProfileValidatePasswordInputSLZ(serializers.Serializer):
         attrs["category_id"] = category_id
         attrs["raw_username"] = raw_username
         return attrs
+
+class ProfileDeletedSearchInputSLZ(serializers.Serializer):
+    search = serializers.CharField(required=False, help_text="搜索关键字")
+

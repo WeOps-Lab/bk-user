@@ -48,5 +48,16 @@ urlpatterns = [
         "validate/",
         views.ProfileValidateApi.as_view(),
         name="profile.validate",
+    ),
+
+    path(
+        "deleted/",
+        views.ProfileQueryDeletedApi.as_view(),
+        name="profile.query.deleted",
+    ),
+    path(
+        "batch/operations/restoration/",
+        views.ProfileBatchRestorationApi.as_view(),
+        name="profile.batch.operation.restoration",
     )
 ]

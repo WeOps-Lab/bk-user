@@ -25,7 +25,7 @@ from bkuser_core.categories.plugins.utils import handle_with_progress_info
 from bkuser_core.common.db_sync import SyncOperation
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.constants import ProfileStatus
-from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.models import Profile, LeaderThroughModel
 from bkuser_core.profiles.validators import validate_username
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -63,7 +63,7 @@ class DepartmentSyncHelper:
 
     def load_to_memory(self):
         for dept in handle_with_progress_info(
-            self.target_obj_list, progress_title="handle department"
+                self.target_obj_list, progress_title="handle department"
         ):  # type: LdapDepartment
             self._handle_department(dept)
 
@@ -154,6 +154,7 @@ class ProfileSyncHelper:
         return {make_key(dept): dept for dept in all_departments}
 
     def _load_base_info(self):
+        profile_ids = set()
         for info in handle_with_progress_info(self.target_obj_list, progress_title="handle profile"):
             try:
                 validate_username(value=info.username)
@@ -187,6 +188,7 @@ class ProfileSyncHelper:
                 for key, value in profile_params.items():
                     setattr(profile, key, value)
                 self.db_sync_manager.magic_add(profile, SyncOperation.UPDATE.value)
+                profile_ids.add(profile.id)
             else:
                 profile = Profile(**profile_params)
                 if self.db_sync_manager.magic_exists(profile):
@@ -199,6 +201,7 @@ class ProfileSyncHelper:
                 else:
                     profile.id = self.db_sync_manager.register_id(LdapProfileMeta)
                     self.db_sync_manager.magic_add(profile, SyncOperation.ADD.value)
+                    profile_ids.add(profile.id)
 
             # 3. 维护关联关系
             for full_department_name_list in info.departments:
@@ -230,14 +233,34 @@ class ProfileSyncHelper:
                     department=department.name,
                 )
             self.context.add_record(step=SyncStep.USERS, success=True, username=info.username)
+        self.profile_ids = profile_ids
 
     def _load_leader_info(self):
-        raise NotImplementedError
+        # 加载上下级关系
+        # WeOps改造,记录原有的上级关系
+        raw_leader_map = tuple(
+            LeaderThroughModel.objects.filter(
+                from_profile_id__in=[profile.id for profile in self.db_profiles.values()]).values_list(
+                "from_profile_id",
+                "to_profile_id"))
+        logger.info(f"load leader info start, raw_leader_map: {raw_leader_map}")
+        add_leader_map = list()
+        for from_profile_id, to_profile_id in raw_leader_map:
+            if from_profile_id not in self.profile_ids or to_profile_id not in self.profile_ids:
+                continue
+            self.try_add_relation(
+                params={"from_profile_id": from_profile_id, "to_profile_id": to_profile_id},
+                target_model=LeaderThroughModel,
+            )
+            add_leader_map.append((from_profile_id, to_profile_id))
+        logger.info(f"load leader info done, add_leader_map: {add_leader_map}")
+        # TODO record记录
 
     def load_to_memory(self):
         self._load_base_info()
         # TODO: 支持处理上下级关系
-        # self._load_leader_info()
+        # WeOps:支持从原上下级关系中获取上下级关系
+        self._load_leader_info()
 
     def try_add_relation(self, params: dict, target_model: Type[Model]):
         """增加关联关系"""
