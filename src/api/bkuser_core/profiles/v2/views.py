@@ -469,12 +469,14 @@ class ProfileImViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         non_exist_im_profiles = []
         for info in im_info:
             username = info.get("username")
-            domain = info.get("domain")
-            username, domain = parse_username_domain(username, domain)
+            request_domain = info.get("domain")
+            username, domain = parse_username_domain(username)
             im_code = info.get("im_code")
             im_user_id = info.get("im_user_id")
             if not domain:
                 domain = get_default_category_domain_from_local_cache()
+            if request_domain and request_domain != domain:
+                logger.warning(f"Request domain:{request_domain} not match username domain:{domain}")
             profile = Profile.objects.filter(username=username, domain=domain).first()
             if not profile:
                 non_exist_profiles.append(username)
