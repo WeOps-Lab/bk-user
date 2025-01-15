@@ -100,24 +100,31 @@ class LDAPClient:
     ) -> List[Dict]:
         """搜索"""
         if not start_root:
-            start_root = self.start_root
+            nodes = self.start_root.split("||")
+        else:
+            nodes = [start_root]
 
-        search_filter = force_filter_str or f"(objectClass={object_class})"
-        logger.info("going to search %s from %s", search_filter, start_root)
-        result = self.con.extend.standard.paged_search(
-            search_base=start_root,
-            search_filter=search_filter,
-            get_operational_attributes=True,
-            attributes=attributes or [],
-            paged_size=self.config_provider.get("ldap_max_paged_size"),
-            generator=False,
-        )
+        result_list = []
 
-        if not result and not self.con.result["result"] == 0 and not self.con.last_error:
-            logger.error("failed to search %s from %s, last_error: %s", search_filter, start_root, self.con.last_error)
-            raise local_exceptions.SearchFailed
+        for node in nodes:
+            search_filter = force_filter_str or f"(objectClass={object_class})"
+            logger.info("going to search %s from %s", search_filter, node)
+            result = self.con.extend.standard.paged_search(
+                search_base=node,
+                search_filter=search_filter,
+                get_operational_attributes=True,
+                attributes=attributes or [],
+                paged_size=self.config_provider.get("ldap_max_paged_size"),
+                generator=False,
+            )
 
-        return self.con.response
+            if not result and not self.con.result["result"] == 0 and not self.con.last_error:
+                logger.error("failed to search %s from %s, last_error: %s", search_filter, node, self.con.last_error)
+                raise local_exceptions.SearchFailed
+
+            result_list += self.con.response
+
+        return result_list
 
     def check(self, username, password):
         params = {

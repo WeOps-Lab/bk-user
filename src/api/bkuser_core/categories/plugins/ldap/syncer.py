@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
@@ -48,18 +47,35 @@ class LDAPFetcher(Fetcher):
 
     def fetch(self):
         """fetch data from remote ldap server"""
-        return self._fetch_data(
-            basic_pull_node=self.config_loader["basic_pull_node"],
-            user_filter=self.config_loader["user_filter"],
-            organization_class=self.config_loader["organization_class"],
-            user_group_filter=self.config_loader.get("user_group_filter"),
-            attributes=self.field_mapper.get_user_attributes(),
-        )
+
+        basic_pull_nodes = self.config_loader["basic_pull_node"].split("||")
+
+        group_list = []
+        department_list = []
+        user_list = []
+        for node in basic_pull_nodes:
+            logger.info(f"fetching data from node: {node}")
+
+            groups, departments, users = self._fetch_data(
+                basic_pull_node=node,
+                user_filter=self.config_loader["user_filter"],
+                organization_class=self.config_loader["organization_class"],
+                user_group_filter=self.config_loader.get("user_group_filter"),
+                attributes=self.field_mapper.get_user_attributes()
+            )
+            group_list += groups
+            department_list += departments
+            user_list += users
+
+        return group_list, department_list, user_list
 
     def test_fetch_data(self, configs: dict):
         """测试获取数据"""
+
+        basic_pull_nodes = self.config_loader["basic_pull_node"].split("||")
+
         return self._fetch_data(
-            basic_pull_node=configs["basic_pull_node"],
+            basic_pull_node=basic_pull_nodes[0],
             user_filter=configs["user_filter"],
             organization_class=configs["organization_class"],
             user_group_filter=configs.get("user_group_filter"),
