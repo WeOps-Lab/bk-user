@@ -50,7 +50,7 @@ class DepartmentSyncHelper:
     @cached_property
     def db_departments(self) -> Dict[str, Department]:
         # 由于 bulk_update 需要从数据库查询完整的 Department 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
-        all_departments: List[Department] = list(Department.objects.filter(category_id=self.category.pk, enabled=True))
+        all_departments: List[Department] = list(Department.objects.filter(category_id=self.category.pk))
 
         def make_key(dept: Department):
             names = []
