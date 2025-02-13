@@ -98,7 +98,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             # NOTE: 这里缩减登陆成功之后的展示字段
             # "position",
             # "logo_url", => to logo?
-            # "telephone",
+            "telephone",
             # "wx_id",
             # "extras",
         ]
