@@ -83,7 +83,7 @@ release-api:
 
 
 release-saas:
-	pushd ./src/pages && npm config set registry https://mirrors.tencent.com/npm/ &&  npm install && npm run build && popd && mv ./src/pages/dist/ ./src/saas/static
+	pushd ./src/pages && echo "registry=https://mirrors.tencent.com/npm/" > .npmrc &&  npm install && npm run build && popd && mv ./src/pages/dist/ ./src/saas/static
 	/bin/cp -Rf ./src/bkuser_global ./src/saas/
 	/bin/cp -Rf ./src/build/saas/bk_user_manage.png ./src/saas/
 	/bin/cp -Rf ./src/build/saas/manage.py ./src/saas/
