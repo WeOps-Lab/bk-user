@@ -106,7 +106,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     # FIXME: 这个slz的full_name也会导致放大查询
     departments = SimpleDepartmentSerializer(many=True, required=False)
     leader = LeaderSerializer(many=True, required=False)
-
+    password_update_time = serializers.DateTimeField(required=False, read_only=True)
     account_expiration_date = serializers.CharField(required=False)
     create_time = serializers.DateTimeField(required=False, read_only=True)
     update_time = serializers.DateTimeField(required=False, read_only=True)
