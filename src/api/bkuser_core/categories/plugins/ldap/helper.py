@@ -140,6 +140,13 @@ class ProfileSyncHelper:
         return {profile.username: profile for profile in Profile.objects.filter(category_id=self.category.pk).all()}
 
     @cached_property
+    def db_profiles_by_code(self) -> Dict[str, Profile]:
+        return {
+            profile.code: profile
+            for profile in Profile.all_objects.filter(category_id=self.category.pk).exclude(code__isnull=True).exclude(code="")
+        }
+
+    @cached_property
     def db_departments(self) -> Dict[str, Department]:
         # 由于 bulk_update 需要从数据库查询完整的 Department 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
         all_departments: List[Department] = list(Department.objects.filter(category_id=self.category.pk, enabled=True))
@@ -182,6 +189,8 @@ class ProfileSyncHelper:
                 "extras": info.extras,
             }
 
+            self._delete_profile_if_username_changed(info.code, info.username)
+
             # 2. 更新或创建 Profile 对象
             if info.username in self.db_profiles:
                 profile = self.db_profiles[info.username]
@@ -189,6 +198,8 @@ class ProfileSyncHelper:
                     setattr(profile, key, value)
                 self.db_sync_manager.magic_add(profile, SyncOperation.UPDATE.value)
                 profile_ids.add(profile.id)
+                self.db_profiles[info.username] = profile
+                self.db_profiles_by_code[info.code] = profile
             else:
                 profile = Profile(**profile_params)
                 if self.db_sync_manager.magic_exists(profile):
@@ -202,6 +213,8 @@ class ProfileSyncHelper:
                     profile.id = self.db_sync_manager.register_id(LdapProfileMeta)
                     self.db_sync_manager.magic_add(profile, SyncOperation.ADD.value)
                     profile_ids.add(profile.id)
+                self.db_profiles[info.username] = profile
+                self.db_profiles_by_code[info.code] = profile
 
             # 3. 维护关联关系
             for full_department_name_list in info.departments:
@@ -234,6 +247,24 @@ class ProfileSyncHelper:
                 )
             self.context.add_record(step=SyncStep.USERS, success=True, username=info.username)
         self.profile_ids = profile_ids
+
+    def _delete_profile_if_username_changed(self, code: str, username: str) -> None:
+        profile = self.db_profiles_by_code.get(code)
+        if not profile or profile.username == username:
+            return
+
+        logger.info(
+            "profile code<%s> exists but username changed from <%s> to <%s>, will hard delete old profile and recreate",
+            code,
+            profile.username,
+            username,
+        )
+
+        old_profile_id = profile.id
+        Profile.all_objects.filter(id=old_profile_id).delete()
+        self.db_profiles.pop(profile.username, None)
+        self.db_profiles_by_code.pop(code, None)
+        return
 
     def _load_leader_info(self):
         # 加载上下级关系

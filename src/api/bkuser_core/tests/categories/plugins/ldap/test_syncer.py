@@ -172,6 +172,45 @@ class TestSyncer:
                 in test_ldap_syncer.db_sync_manager._sets[ProfileMeta.target_model].updating_items
             )
 
+    def test_sync_users_recreate_when_code_exists_but_username_changes(self, test_ldap_syncer):
+        make_simple_profile(
+            "old_username",
+            force_create_params={
+                "category_id": test_ldap_syncer.category_id,
+                "code": "same-code",
+            },
+        )
+
+        users = [
+            {
+                "raw_dn": b"CN=dddd aaaaa,OU=shenzhen,DC=center,DC=com",
+                "dn": "CN=dddd aaaaa,OU=shenzhen,DC=center,DC=com",
+                "raw_attributes": {
+                    "displayName": [b"dddd aaaaa"],
+                    "cn": [b"new_username"],
+                    "mail": [b"aaaa@asdf.com"],
+                    "telephonenumber": [b"123412341234"],
+                    "memberOf": [],
+                },
+                "attributes": {
+                    "displayName": "dddd aaaaa",
+                    "sAMAccountName": "new_username",
+                    "mail": "aaaa@asdf.com",
+                    "mobile": "123412341234",
+                    "memberOf": [],
+                },
+                "type": "searchResEntry",
+            }
+        ]
+
+        with mock.patch.object(test_ldap_syncer.fetcher, "fetch") as fetch:
+            fetch.return_value = [], [], users
+            test_ldap_syncer._sync_profile()
+
+        assert not test_ldap_syncer.db_sync_manager.magic_get("old_username", ProfileMeta)
+        new_profile = test_ldap_syncer.db_sync_manager.magic_get("new_username", ProfileMeta)
+        assert new_profile in test_ldap_syncer.db_sync_manager._sets[ProfileMeta.target_model].adding_items
+
     @pytest.mark.parametrize(
         "departments, expected, expected_count",
         [
